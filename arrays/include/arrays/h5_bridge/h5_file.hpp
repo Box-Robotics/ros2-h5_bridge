@@ -158,6 +158,18 @@ namespace arrays::h5_bridge
                   const arrays::h5_bridge::Attr_t& value);
 
     /**
+     * Special-case for writing an attribute on to an object whose value is a
+     * C-string.
+     *
+     * @param[in] obj The object we wish to annotate
+     * @param[in] key The attribute key
+     * @param[in] value A C-string value
+     */
+    void set_attr(const arrays::h5_bridge::H5ObjId& obj,
+                  const std::string& key,
+                  const char * value);
+
+    /**
      * Accessor for the value of an attribute on a cached object.
      *
      * @param[in] obj The cached object whose attribute we want to access
@@ -184,16 +196,9 @@ namespace arrays::h5_bridge
     }
 
     /**
-     * Special-case for writing an attribute on to an object whose value is a
-     * C-string.
-     *
-     * @param[in] obj The object we wish to annotate
-     * @param[in] key The attribute key
-     * @param[in] value A C-string value
+     * Flush buffers to disk
      */
-    void set_attr(const arrays::h5_bridge::H5ObjId& obj,
-                  const std::string& key,
-                  const char * value);
+    void flush();
 
   private:
     void attr(const arrays::h5_bridge::H5ObjId& obj, const std::string& key,

@@ -190,3 +190,9 @@ TEST(h5, GroupAttributes)
       EXPECT_STREQ(bar.c_str(), h5->attr<std::string>(grp, "bar").c_str());
     }
 }
+
+TEST(h5, flush)
+{
+  auto h5 = std::make_unique<arrays::h5_bridge::H5File>(H5_INFILE, "a");
+  EXPECT_NO_THROW(h5->flush());
+}

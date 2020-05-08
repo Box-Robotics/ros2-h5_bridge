@@ -104,3 +104,9 @@ arrays::h5_bridge::H5File::attr(
 {
   this->pImpl->attr(obj.value(), key, value_out);
 }
+
+void
+arrays::h5_bridge::H5File::flush()
+{
+  this->pImpl->flush();
+}

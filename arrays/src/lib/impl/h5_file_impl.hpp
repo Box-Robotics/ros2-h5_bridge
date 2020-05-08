@@ -117,6 +117,7 @@ namespace arrays::h5_bridge
                   const arrays::h5_bridge::Attr_t& value);
     void attr(const std::string& path, const std::string& key,
               arrays::h5_bridge::Attr_t& attr_out);
+    void flush();
 
   protected:
     std::string name(hid_t id);
@@ -192,6 +193,12 @@ std::string
 arrays::h5_bridge::H5File::Impl::filename()
 {
   return this->fname_;
+}
+
+void
+arrays::h5_bridge::H5File::Impl::flush()
+{
+  H5Fflush(this->h5_->getId(), H5F_SCOPE_LOCAL);
 }
 
 std::string

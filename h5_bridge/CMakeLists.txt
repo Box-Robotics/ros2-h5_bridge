@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(arrays)
+project(h5_bridge)
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 17)
@@ -28,7 +28,7 @@ add_definitions(
   )
 
 #-----------------------
-# libarrays.so
+# libh5_bridge.so
 #-----------------------
 
 add_library(${PROJECT_NAME} SHARED

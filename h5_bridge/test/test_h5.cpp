@@ -4,9 +4,9 @@
 #include <string>
 #include <vector>
 
-#include <arrays/err.hpp>
-#include <arrays/h5_bridge.hpp>
-#include <arrays/logging.hpp>
+#include <h5_bridge/err.hpp>
+#include <h5_bridge/logging.hpp>
+#include <h5_bridge/h5_file.hpp>
 
 #include <gtest/gtest.h>
 
@@ -15,35 +15,35 @@ namespace fs = std::filesystem;
 auto h5_infile_ = []()->std::string
 {
   auto tmp_dir = std::filesystem::temp_directory_path();
-  return tmp_dir.native() + std::string("/arrays_test.h5");
+  return tmp_dir.native() + std::string("/h5_bridge_test.h5");
 };
 
 const std::string H5_INFILE = h5_infile_();
 // XXX: Don't change these, the tests below depnd on them.
 const std::vector<std::string> GROUP_NAMES =
   {
-    "/arrays/A", "/arrays/B", "/arrays/C",
-    "/arrays/A/1", "/arrays/A/2", "/arrays/A/3",
-    "/arrays/B/4", "/arrays/B/5", "/arrays/B/6",
-    "/arrays/C/7", "/arrays/C/8", "/arrays/C/9",
+    "/h5_bridge/A", "/h5_bridge/B", "/h5_bridge/C",
+    "/h5_bridge/A/1", "/h5_bridge/A/2", "/h5_bridge/A/3",
+    "/h5_bridge/B/4", "/h5_bridge/B/5", "/h5_bridge/B/6",
+    "/h5_bridge/C/7", "/h5_bridge/C/8", "/h5_bridge/C/9",
   };
 
 TEST(h5, FileCreationBadMode)
 {
   fs::remove(fs::path(H5_INFILE));
-  arrays::use_arrays_logger();
-  ALOG_INFO("==========================================================");
+  h5_bridge::use_h5_bridge_logger();
+  H5B_INFO("==========================================================");
 
   bool ex_caught = false;
 
   try
     {
-      auto h5 = std::make_unique<arrays::h5_bridge::H5File>(H5_INFILE, "foo");
+      auto h5 = std::make_unique<h5_bridge::H5File>(H5_INFILE, "foo");
     }
-  catch (const arrays::error_t& ex)
+  catch (const h5_bridge::error_t& ex)
     {
       ex_caught = true;
-      EXPECT_EQ(ex.code(), arrays::ERR_H5_BAD_MODE);
+      EXPECT_EQ(ex.code(), h5_bridge::ERR_H5_BAD_MODE);
     }
 
   EXPECT_TRUE(ex_caught);
@@ -53,52 +53,52 @@ TEST(h5, FileCreation)
 {
   fs::remove(fs::path(H5_INFILE));
 
-  arrays::h5_bridge::H5File::Ptr h5;
+  h5_bridge::H5File::Ptr h5;
 
-  EXPECT_THROW(h5 = std::make_unique<arrays::h5_bridge::H5File>(H5_INFILE, "r"),
-               arrays::error_t);
-
-  EXPECT_THROW(
-    h5 = std::make_unique<arrays::h5_bridge::H5File>(H5_INFILE, "r+"),
-    arrays::error_t);
-
-  EXPECT_NO_THROW(
-    h5 = std::make_unique<arrays::h5_bridge::H5File>(H5_INFILE, "w"));
+  EXPECT_THROW(h5 = std::make_unique<h5_bridge::H5File>(H5_INFILE, "r"),
+               h5_bridge::error_t);
 
   EXPECT_THROW(
-    h5 = std::make_unique<arrays::h5_bridge::H5File>(H5_INFILE, "w-"),
-    arrays::error_t);
+    h5 = std::make_unique<h5_bridge::H5File>(H5_INFILE, "r+"),
+    h5_bridge::error_t);
 
   EXPECT_NO_THROW(
-    h5 = std::make_unique<arrays::h5_bridge::H5File>(H5_INFILE, "a"));
+    h5 = std::make_unique<h5_bridge::H5File>(H5_INFILE, "w"));
+
+  EXPECT_THROW(
+    h5 = std::make_unique<h5_bridge::H5File>(H5_INFILE, "w-"),
+    h5_bridge::error_t);
+
+  EXPECT_NO_THROW(
+    h5 = std::make_unique<h5_bridge::H5File>(H5_INFILE, "a"));
   h5.reset();
 
   fs::remove(fs::path(H5_INFILE));
 
   EXPECT_NO_THROW(
-    h5 = std::make_unique<arrays::h5_bridge::H5File>(H5_INFILE, "a"));
+    h5 = std::make_unique<h5_bridge::H5File>(H5_INFILE, "a"));
 }
 
 TEST(h5, MoveSemantics)
 {
-  auto h5 = arrays::h5_bridge::H5File(H5_INFILE, "a");
-  auto h5_new = arrays::h5_bridge::H5File(std::move(h5));
+  auto h5 = h5_bridge::H5File(H5_INFILE, "a");
+  auto h5_new = h5_bridge::H5File(std::move(h5));
   EXPECT_STREQ(h5_new.filename().c_str(), H5_INFILE.c_str());
 }
 
 TEST(h5, filename)
 {
-  auto h5 = std::make_unique<arrays::h5_bridge::H5File>(H5_INFILE, "a");
+  auto h5 = std::make_unique<h5_bridge::H5File>(H5_INFILE, "a");
   EXPECT_STREQ(h5->filename().c_str(), H5_INFILE.c_str());
 }
 
 TEST(h5, group)
 {
-  auto h5 = std::make_unique<arrays::h5_bridge::H5File>(H5_INFILE, "a");
+  auto h5 = std::make_unique<h5_bridge::H5File>(H5_INFILE, "a");
 
   for (auto& name : GROUP_NAMES)
     {
-      arrays::h5_bridge::H5ObjId grp;
+      h5_bridge::H5ObjId grp;
       EXPECT_NO_THROW(grp = h5->group(name));
       EXPECT_TRUE(grp);
       EXPECT_STREQ(grp.value().c_str(), name.c_str());
@@ -107,25 +107,25 @@ TEST(h5, group)
 
 TEST(h5, subgroups)
 {
-  auto h5 = std::make_unique<arrays::h5_bridge::H5File>(H5_INFILE, "a");
+  auto h5 = std::make_unique<h5_bridge::H5File>(H5_INFILE, "a");
 
-  arrays::h5_bridge::H5ObjId grp; // std::nullopt -> get subgroups of "/"
+  h5_bridge::H5ObjId grp; // std::nullopt -> get subgroups of "/"
   auto subgroups = h5->subgroups(grp);
-  EXPECT_TRUE(subgroups == decltype(subgroups)({"arrays"}));
+  EXPECT_TRUE(subgroups == decltype(subgroups)({"h5_bridge"}));
 
-  subgroups = h5->subgroups("/arrays");
+  subgroups = h5->subgroups("/h5_bridge");
   EXPECT_TRUE(subgroups == decltype(subgroups)({"A", "B", "C"}));
 
-  subgroups = h5->subgroups("/arrays/A");
+  subgroups = h5->subgroups("/h5_bridge/A");
   EXPECT_TRUE(subgroups == decltype(subgroups)({"1", "2", "3"}));
 
-  subgroups = h5->subgroups("/arrays/B");
+  subgroups = h5->subgroups("/h5_bridge/B");
   EXPECT_TRUE(subgroups == decltype(subgroups)({"4", "5", "6"}));
 
-  subgroups = h5->subgroups("/arrays/C");
+  subgroups = h5->subgroups("/h5_bridge/C");
   EXPECT_TRUE(subgroups == decltype(subgroups)({"7", "8", "9"}));
 
-  EXPECT_THROW(h5->subgroups("/foo/bar/baz"), arrays::error_t);
+  EXPECT_THROW(h5->subgroups("/foo/bar/baz"), h5_bridge::error_t);
 }
 
 TEST(h5, GroupAttributes)
@@ -150,7 +150,7 @@ TEST(h5, GroupAttributes)
      "f32", "f64", "bt", "bf", "foo", "bar"};
   std::sort(attr_names.begin(), attr_names.end());
 
-  auto h5 = std::make_unique<arrays::h5_bridge::H5File>(H5_INFILE, "a");
+  auto h5 = std::make_unique<h5_bridge::H5File>(H5_INFILE, "a");
   for (auto& name : GROUP_NAMES)
     {
       auto grp = h5->group(name);
@@ -193,6 +193,6 @@ TEST(h5, GroupAttributes)
 
 TEST(h5, flush)
 {
-  auto h5 = std::make_unique<arrays::h5_bridge::H5File>(H5_INFILE, "a");
+  auto h5 = std::make_unique<h5_bridge::H5File>(H5_INFILE, "a");
   EXPECT_NO_THROW(h5->flush());
 }

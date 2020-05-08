@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ARRAYS__VISIBILITY_CONTROL_H_
-#define ARRAYS__VISIBILITY_CONTROL_H_
+#ifndef H5_BRIDGE__VISIBILITY_CONTROL_H_
+#define H5_BRIDGE__VISIBILITY_CONTROL_H_
 
 #ifdef __cplusplus
 extern "C"
@@ -26,34 +26,34 @@ extern "C"
 
 #if defined _WIN32 || defined __CYGWIN__
   #ifdef __GNUC__
-    #define ARRAYS_EXPORT __attribute__ ((dllexport))
-    #define ARRAYS_IMPORT __attribute__ ((dllimport))
+    #define H5_BRIDGE_EXPORT __attribute__ ((dllexport))
+    #define H5_BRIDGE_IMPORT __attribute__ ((dllimport))
   #else
-    #define ARRAYS_EXPORT __declspec(dllexport)
-    #define ARRAYS_IMPORT __declspec(dllimport)
+    #define H5_BRIDGE_EXPORT __declspec(dllexport)
+    #define H5_BRIDGE_IMPORT __declspec(dllimport)
   #endif
-  #ifdef ARRAYS_BUILDING_DLL
-    #define ARRAYS_PUBLIC ARRAYS_EXPORT
+  #ifdef H5_BRIDGE_BUILDING_DLL
+    #define H5_BRIDGE_PUBLIC H5_BRIDGE_EXPORT
   #else
-    #define ARRAYS_PUBLIC ARRAYS_IMPORT
+    #define H5_BRIDGE_PUBLIC H5_BRIDGE_IMPORT
   #endif
-  #define ARRAYS_PUBLIC_TYPE ARRAYS_PUBLIC
-  #define ARRAYS_LOCAL
+  #define H5_BRIDGE_PUBLIC_TYPE H5_BRIDGE_PUBLIC
+  #define H5_BRIDGE_LOCAL
 #else
-  #define ARRAYS_EXPORT __attribute__ ((visibility("default")))
-  #define ARRAYS_IMPORT
+  #define H5_BRIDGE_EXPORT __attribute__ ((visibility("default")))
+  #define H5_BRIDGE_IMPORT
   #if __GNUC__ >= 4
-    #define ARRAYS_PUBLIC __attribute__ ((visibility("default")))
-    #define ARRAYS_LOCAL  __attribute__ ((visibility("hidden")))
+    #define H5_BRIDGE_PUBLIC __attribute__ ((visibility("default")))
+    #define H5_BRIDGE_LOCAL  __attribute__ ((visibility("hidden")))
   #else
-    #define ARRAYS_PUBLIC
-    #define ARRAYS_LOCAL
+    #define H5_BRIDGE_PUBLIC
+    #define H5_BRIDGE_LOCAL
   #endif
-  #define ARRAYS_PUBLIC_TYPE
+  #define H5_BRIDGE_PUBLIC_TYPE
 #endif
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // ARRAYS__VISIBILITY_CONTROL_H_
+#endif  // H5_BRIDGE__VISIBILITY_CONTROL_H_

@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ARRAYS__H5_BRIDGE_H5_FILE_H_
-#define ARRAYS__H5_BRIDGE_H5_FILE_H_
+#ifndef H5_BRIDGE__H5_BRIDGE_H5_FILE_H_
+#define H5_BRIDGE__H5_BRIDGE_H5_FILE_H_
 
 #include <filesystem>
 #include <memory>
@@ -24,10 +24,10 @@
 #include <type_traits>
 #include <vector>
 
-#include <arrays/h5_bridge/h5_attr_t.hpp>
-#include <arrays/visibility_control.h>
+#include <h5_bridge/h5_attr_t.hpp>
+#include <h5_bridge/visibility_control.h>
 
-namespace arrays::h5_bridge
+namespace h5_bridge
 {
   /**
    * The H5 resources managed by a file container (see `H5File`) that we
@@ -53,12 +53,12 @@ namespace arrays::h5_bridge
    * meant to be "H5 for humans" ... human C++ programmers :-)
    *
    * Given that H5 files effectively act like a "filesystem in a file," within
-   * the `arrays` library, we are mostly interested in being able to store
+   * this library we are mostly interested in being able to store
    * arrays ("data sets" in H5-speak)  into and load arrays from H5 files. We
    * also want to organize them into groups (filesystem-like paths) and well as
    * provide `key=value` attributes on groups and arrays.
    */
-  class ARRAYS_PUBLIC H5File
+  class H5_BRIDGE_PUBLIC H5File
   {
   public:
     using Ptr = std::unique_ptr<H5File>;
@@ -115,7 +115,7 @@ namespace arrays::h5_bridge
      * @param[in] path Full path the group to create or query.
      * @return An `H5ObjId` pointing to the group.
      */
-    arrays::h5_bridge::H5ObjId group(const std::string& path);
+    h5_bridge::H5ObjId group(const std::string& path);
 
     /**
      * Provide a list of immediate subgroups of the passed-in group. This does
@@ -128,7 +128,7 @@ namespace arrays::h5_bridge
      * @return A vector of strings of the names of the first-level subgroups of
      *                  `group`.
      */
-    std::vector<std::string> subgroups(const arrays::h5_bridge::H5ObjId& group);
+    std::vector<std::string> subgroups(const h5_bridge::H5ObjId& group);
 
     /**
      * Provides a list of attribute names that are annotating the passed in
@@ -144,7 +144,7 @@ namespace arrays::h5_bridge
      * @return A vector of strings of the names of the attributes annotating
      *                `obj`.
      */
-    std::vector<std::string> attributes(const arrays::h5_bridge::H5ObjId& obj);
+    std::vector<std::string> attributes(const h5_bridge::H5ObjId& obj);
 
     /**
      * Annotates an object `obj` with a scalar attribute
@@ -153,9 +153,9 @@ namespace arrays::h5_bridge
      * @param[in] key The attribute key
      * @param[in] value The value of the attribute
      */
-    void set_attr(const arrays::h5_bridge::H5ObjId& obj,
+    void set_attr(const h5_bridge::H5ObjId& obj,
                   const std::string& key,
-                  const arrays::h5_bridge::Attr_t& value);
+                  const h5_bridge::Attr_t& value);
 
     /**
      * Special-case for writing an attribute on to an object whose value is a
@@ -165,7 +165,7 @@ namespace arrays::h5_bridge
      * @param[in] key The attribute key
      * @param[in] value A C-string value
      */
-    void set_attr(const arrays::h5_bridge::H5ObjId& obj,
+    void set_attr(const h5_bridge::H5ObjId& obj,
                   const std::string& key,
                   const char * value);
 
@@ -178,9 +178,9 @@ namespace arrays::h5_bridge
      * @return The value of the attribute.
      */
     template<typename T>
-    T attr(const arrays::h5_bridge::H5ObjId& obj, const std::string& key)
+    T attr(const h5_bridge::H5ObjId& obj, const std::string& key)
     {
-      arrays::h5_bridge::Attr_t value;
+      h5_bridge::Attr_t value;
       if constexpr (std::is_same_v<T, std::string>)
         {
           value.emplace<T>(std::string(""));
@@ -201,14 +201,14 @@ namespace arrays::h5_bridge
     void flush();
 
   private:
-    void attr(const arrays::h5_bridge::H5ObjId& obj, const std::string& key,
-              arrays::h5_bridge::Attr_t& value_out);
+    void attr(const h5_bridge::H5ObjId& obj, const std::string& key,
+              h5_bridge::Attr_t& value_out);
 
     class Impl;
     std::unique_ptr<Impl> pImpl;
 
   }; // end: class H5File
 
-} // end: namespace arrays::h5_bridge
+} // end: namespace h5_bridge
 
-#endif // ARRAYS__H5_BRIDGE_H5_FILE_H_
+#endif // H5_BRIDGE__H5_BRIDGE_H5_FILE_H_

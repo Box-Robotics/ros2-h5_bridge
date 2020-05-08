@@ -14,57 +14,57 @@
  * limitations under the License.
  */
 
-#include <arrays/err.hpp>
+#include <h5_bridge/err.hpp>
 #include <cstring>
 #include <stdexcept>
 
-const int arrays::OK = 0;
-const int arrays::ERR_H5_BAD_MODE = 6000;
-const int arrays::ERR_H5_OPEN_FAILED = 6001;
-const int arrays::ERR_H5_CREATE_GROUP_FAILED = 6002;
-const int arrays::ERR_H5_EXCEPTION = 6003;
-const int arrays::ERR_H5_NO_SUCH_GROUP = 6004;
-const int arrays::ERR_H5_OBJ_NOT_IN_CACHE = 6005;
-const int arrays::ERR_H5_INVALID_TYPE = 6006;
-const int arrays::ERR_H5_NO_SUCH_ATTR = 6007;
-const int arrays::ERR_H5_CREATE_ATTR_FAILED = 6008;
-const int arrays::ERR_H5_WRITE_ATTR_FAILED = 6009;
+const int h5_bridge::OK = 0;
+const int h5_bridge::ERR_H5_BAD_MODE = 6000;
+const int h5_bridge::ERR_H5_OPEN_FAILED = 6001;
+const int h5_bridge::ERR_H5_CREATE_GROUP_FAILED = 6002;
+const int h5_bridge::ERR_H5_EXCEPTION = 6003;
+const int h5_bridge::ERR_H5_NO_SUCH_GROUP = 6004;
+const int h5_bridge::ERR_H5_OBJ_NOT_IN_CACHE = 6005;
+const int h5_bridge::ERR_H5_INVALID_TYPE = 6006;
+const int h5_bridge::ERR_H5_NO_SUCH_ATTR = 6007;
+const int h5_bridge::ERR_H5_CREATE_ATTR_FAILED = 6008;
+const int h5_bridge::ERR_H5_WRITE_ATTR_FAILED = 6009;
 
-const char *arrays::strerror(int errnum)
+const char *h5_bridge::strerror(int errnum)
 {
   switch (errnum)
     {
-    case arrays::OK:
+    case h5_bridge::OK:
       return "OK";
 
-    case arrays::ERR_H5_BAD_MODE:
+    case h5_bridge::ERR_H5_BAD_MODE:
       return "Bad H5 file mode";
 
-    case arrays::ERR_H5_OPEN_FAILED:
+    case h5_bridge::ERR_H5_OPEN_FAILED:
       return "Failed to open H5 file with passed in mode, check permissions";
 
-    case arrays::ERR_H5_CREATE_GROUP_FAILED:
+    case h5_bridge::ERR_H5_CREATE_GROUP_FAILED:
       return "Failed to create Group";
 
-    case arrays::ERR_H5_EXCEPTION:
+    case h5_bridge::ERR_H5_EXCEPTION:
       return "The underlying H5 library encountered an error";
 
-    case arrays::ERR_H5_NO_SUCH_GROUP:
+    case h5_bridge::ERR_H5_NO_SUCH_GROUP:
       return "The H5 group does not exist";
 
-    case arrays::ERR_H5_OBJ_NOT_IN_CACHE:
+    case h5_bridge::ERR_H5_OBJ_NOT_IN_CACHE:
       return "Requested object is not cached, instantiate it first";
 
-    case arrays::ERR_H5_INVALID_TYPE:
+    case h5_bridge::ERR_H5_INVALID_TYPE:
       return "The H5Object is of the wrong type";
 
-    case arrays::ERR_H5_NO_SUCH_ATTR:
+    case h5_bridge::ERR_H5_NO_SUCH_ATTR:
       return "The H5 object has no such attribute";
 
-    case arrays::ERR_H5_CREATE_ATTR_FAILED:
+    case h5_bridge::ERR_H5_CREATE_ATTR_FAILED:
       return "Failed to create attribute";
 
-    case arrays::ERR_H5_WRITE_ATTR_FAILED:
+    case h5_bridge::ERR_H5_WRITE_ATTR_FAILED:
       return "Failed to write attribute value";
 
     default:
@@ -72,15 +72,15 @@ const char *arrays::strerror(int errnum)
     }
 }
 
-arrays::error_t::error_t(int errnum)
+h5_bridge::error_t::error_t(int errnum)
   : std::exception(), errnum_(errnum) {}
 
-int arrays::error_t::code() const noexcept
+int h5_bridge::error_t::code() const noexcept
 {
   return this->errnum_;
 }
 
-const char *arrays::error_t::what() const noexcept
+const char *h5_bridge::error_t::what() const noexcept
 {
-  return arrays::strerror(this->code());
+  return h5_bridge::strerror(this->code());
 }

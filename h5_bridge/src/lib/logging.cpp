@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <arrays/logging.hpp>
+#include <h5_bridge/logging.hpp>
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
@@ -30,7 +30,7 @@
 
 namespace fs = std::filesystem;
 
-namespace arrays
+namespace h5_bridge
 {
   /**
    * Wrapper used to initialize the underlying default spdlog logger
@@ -60,7 +60,7 @@ namespace arrays
     {
       spdlog::init_thread_pool(async_queue_size, nthreads);
       fs::path outfile =
-        arrays::Logging::construct_logfile_path_(log_dir, log_file);
+        h5_bridge::Logging::construct_logfile_path_(log_dir, log_file);
       fs::path dir_part = outfile.parent_path();
       fs::path file_part = outfile.filename();
 
@@ -68,9 +68,9 @@ namespace arrays
       fs::create_directories(dir_part, ec);
       auto logger = ec ?
         spdlog::create_async_nb<spdlog::sinks::stdout_color_sink_mt>(
-          ARRAYS_LOGGER_NAME) :
+          H5_BRIDGE_LOGGER_NAME) :
         spdlog::create_async_nb<spdlog::sinks::rotating_file_sink_mt>(
-              ARRAYS_LOGGER_NAME,
+              H5_BRIDGE_LOGGER_NAME,
               outfile.u8string(),
               max_file_size,
               max_files);
@@ -87,7 +87,7 @@ namespace arrays
      * 1. If `file` is not specified, we contruct a new file name relative to
      *    `dir`. Our filename will be named:
      *
-     *     ARRAYS_LOGGER_NAME.<timestamp>.<thread_id>.log
+     *     H5_BRIDGE_LOGGER_NAME.<timestamp>.<thread_id>.log
      *
      * 2. If `file` is specified:
      *    2.1. If it is an absolute path, we ignore `dir` and log to the
@@ -103,7 +103,7 @@ namespace arrays
       if (file.empty())
         {
           std::ostringstream os;
-          os << ARRAYS_LOGGER_NAME << "."
+          os << H5_BRIDGE_LOGGER_NAME << "."
              << std::time(nullptr) << "."
              << std::this_thread::get_id() << "."
              << "log";
@@ -155,7 +155,7 @@ namespace arrays
                      std::size_t async_queue_size,
                      std::size_t nthreads)
     {
-      std::call_once(arrays::Logging::init_, arrays::Logging::_Init,
+      std::call_once(h5_bridge::Logging::init_, h5_bridge::Logging::_Init,
                      level,
                      flush_level,
                      format,
@@ -173,14 +173,14 @@ namespace arrays
     return spdlog::default_logger();
   }
 
-  void set_default_logger(std::shared_ptr<arrays::log::logger> logger)
+  void set_default_logger(std::shared_ptr<h5_bridge::log::logger> logger)
   {
     spdlog::set_default_logger(std::move(logger));
   }
 
-} // end: namespace arrays
+} // end: namespace h5_bridge
 
-std::once_flag arrays::Logging::init_;
+std::once_flag h5_bridge::Logging::init_;
 
 // Initializer sample for MSVC and GCC/Clang.
 // 2010-2016 Joe Lowe. Released into the public domain.
@@ -207,51 +207,51 @@ std::once_flag arrays::Logging::init_;
         static void f(void)
 #endif
 
-INITIALIZER(arrays_ctor)
+INITIALIZER(h5_bridge_ctor)
 {
   //
   // Environment variables controlling our logging setup
   //
-  int log_level = std::getenv("ARRAYS_LOG_LEVEL") == nullptr ?
-    spdlog::level::info : std::atoi(std::getenv("ARRAYS_LOG_LEVEL"));
+  int log_level = std::getenv("H5_BRIDGE_LOG_LEVEL") == nullptr ?
+    spdlog::level::info : std::atoi(std::getenv("H5_BRIDGE_LOG_LEVEL"));
 
-  int log_flush_level = std::getenv("ARRAYS_LOG_FLUSH_LEVEL") == nullptr ?
-    spdlog::level::trace : std::atoi(std::getenv("ARRAYS_LOG_FLUSH_LEVEL"));
+  int log_flush_level = std::getenv("H5_BRIDGE_LOG_FLUSH_LEVEL") == nullptr ?
+    spdlog::level::trace : std::atoi(std::getenv("H5_BRIDGE_LOG_FLUSH_LEVEL"));
 
-  std::string log_dir = std::getenv("ARRAYS_LOG_DIR") == nullptr ?
-    "/tmp" : std::string(std::getenv("ARRAYS_LOG_DIR"));
+  std::string log_dir = std::getenv("H5_BRIDGE_LOG_DIR") == nullptr ?
+    "/tmp" : std::string(std::getenv("H5_BRIDGE_LOG_DIR"));
 
-  std::string log_file = std::getenv("ARRAYS_LOG_FILE") == nullptr ?
-    "" : std::string(std::getenv("ARRAYS_LOG_FILE"));
+  std::string log_file = std::getenv("H5_BRIDGE_LOG_FILE") == nullptr ?
+    "" : std::string(std::getenv("H5_BRIDGE_LOG_FILE"));
 
   // 5 MB max log file size by default
   std::size_t log_max_file_size =
-    std::getenv("ARRAYS_LOG_MAX_FILE_SIZE") == nullptr ?
-    1024*1024*5 : std::atoi(std::getenv("ARRAYS_LOG_MAX_FILE_SIZE"));
+    std::getenv("H5_BRIDGE_LOG_MAX_FILE_SIZE") == nullptr ?
+    1024*1024*5 : std::atoi(std::getenv("H5_BRIDGE_LOG_MAX_FILE_SIZE"));
 
   std::size_t log_max_files =
-    std::getenv("ARRAYS_LOG_MAX_FILES") == nullptr ?
-    5 : std::atoi(std::getenv("ARRAYS_LOG_MAX_FILES"));
+    std::getenv("H5_BRIDGE_LOG_MAX_FILES") == nullptr ?
+    5 : std::atoi(std::getenv("H5_BRIDGE_LOG_MAX_FILES"));
 
   std::size_t log_queue_size =
-    std::getenv("ARRAYS_LOG_ASYNC_QUEUE_SIZE") == nullptr ?
-    8192 : std::atoi(std::getenv("ARRAYS_LOG_ASYNC_QUEUE_SIZE"));
+    std::getenv("H5_BRIDGE_LOG_ASYNC_QUEUE_SIZE") == nullptr ?
+    8192 : std::atoi(std::getenv("H5_BRIDGE_LOG_ASYNC_QUEUE_SIZE"));
 
   std::size_t log_nthreads =
-    std::getenv("ARRAYS_LOG_ASYNC_QUEUE_NTHREADS") == nullptr ?
-    1 : std::atoi(std::getenv("ARRAYS_LOG_ASYNC_QUEUE_NTHREADS"));
+    std::getenv("H5_BRIDGE_LOG_ASYNC_QUEUE_NTHREADS") == nullptr ?
+    1 : std::atoi(std::getenv("H5_BRIDGE_LOG_ASYNC_QUEUE_NTHREADS"));
 
   std::string format =
-    std::getenv("ARRAYS_LOG_FORMAT") == nullptr ?
-    ARRAYS_LOGGER_FORMAT : std::string(std::getenv("ARRAYS_LOG_FORMAT"));
+    std::getenv("H5_BRIDGE_LOG_FORMAT") == nullptr ?
+    H5_BRIDGE_LOGGER_FORMAT : std::string(std::getenv("H5_BRIDGE_LOG_FORMAT"));
 
-  arrays::Logging::Init(log_level,
-                        log_flush_level,
-                        format,
-                        log_dir,
-                        log_file,
-                        log_max_file_size,
-                        log_max_files,
-                        log_queue_size,
-                        log_nthreads);
+  h5_bridge::Logging::Init(log_level,
+                           log_flush_level,
+                           format,
+                           log_dir,
+                           log_file,
+                           log_max_file_size,
+                           log_max_files,
+                           log_queue_size,
+                           log_nthreads);
 }

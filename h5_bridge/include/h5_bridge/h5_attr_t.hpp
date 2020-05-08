@@ -14,14 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ARRAYS__H5_BRIDGE_H5_ATTR_T_H_
-#define ARRAYS__H5_BRIDGE_H5_ATTR_T_H_
+#ifndef H5_BRIDGE__H5_BRIDGE_H5_ATTR_T_H_
+#define H5_BRIDGE__H5_BRIDGE_H5_ATTR_T_H_
 
 #include <cstdint>
 #include <string>
 #include <variant>
 
-namespace arrays::h5_bridge
+namespace h5_bridge
 {
   using Attr_t = std::variant<std::uint8_t,
                               std::uint16_t,
@@ -36,6 +36,6 @@ namespace arrays::h5_bridge
                               bool,
                               std::string>;
 
-} // end: namespace arrays::h5_bridge
+} // end: namespace h5_bridge::h5_bridge
 
-#endif // ARRAYS__H5_BRIDGE_H5_ATTR_T_H_
+#endif // H5_BRIDGE__H5_BRIDGE_H5_ATTR_T_H_

@@ -14,25 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ARRAYS__ERR_H_
-#define ARRAYS__ERR_H_
+#ifndef H5_BRIDGE__ERR_H_
+#define H5_BRIDGE__ERR_H_
 
 #include <exception>
-#include <arrays/visibility_control.h>
+#include <h5_bridge/visibility_control.h>
 
-namespace arrays
+namespace h5_bridge
 {
-  extern ARRAYS_PUBLIC const int OK;
-  extern ARRAYS_PUBLIC const int ERR_H5_BAD_MODE;
-  extern ARRAYS_PUBLIC const int ERR_H5_OPEN_FAILED;
-  extern ARRAYS_PUBLIC const int ERR_H5_CREATE_GROUP_FAILED;
-  extern ARRAYS_PUBLIC const int ERR_H5_EXCEPTION;
-  extern ARRAYS_PUBLIC const int ERR_H5_NO_SUCH_GROUP;
-  extern ARRAYS_PUBLIC const int ERR_H5_OBJ_NOT_IN_CACHE;
-  extern ARRAYS_PUBLIC const int ERR_H5_INVALID_TYPE;
-  extern ARRAYS_PUBLIC const int ERR_H5_NO_SUCH_ATTR;
-  extern ARRAYS_PUBLIC const int ERR_H5_CREATE_ATTR_FAILED;
-  extern ARRAYS_PUBLIC const int ERR_H5_WRITE_ATTR_FAILED;
+  extern H5_BRIDGE_PUBLIC const int OK;
+  extern H5_BRIDGE_PUBLIC const int ERR_H5_BAD_MODE;
+  extern H5_BRIDGE_PUBLIC const int ERR_H5_OPEN_FAILED;
+  extern H5_BRIDGE_PUBLIC const int ERR_H5_CREATE_GROUP_FAILED;
+  extern H5_BRIDGE_PUBLIC const int ERR_H5_EXCEPTION;
+  extern H5_BRIDGE_PUBLIC const int ERR_H5_NO_SUCH_GROUP;
+  extern H5_BRIDGE_PUBLIC const int ERR_H5_OBJ_NOT_IN_CACHE;
+  extern H5_BRIDGE_PUBLIC const int ERR_H5_INVALID_TYPE;
+  extern H5_BRIDGE_PUBLIC const int ERR_H5_NO_SUCH_ATTR;
+  extern H5_BRIDGE_PUBLIC const int ERR_H5_CREATE_ATTR_FAILED;
+  extern H5_BRIDGE_PUBLIC const int ERR_H5_WRITE_ATTR_FAILED;
 
   /**
    * Human-readable string representation of an error code
@@ -45,7 +45,7 @@ namespace arrays
   /**
    * Exception wrapper for error codes
    */
-  class ARRAYS_PUBLIC error_t : public std::exception
+  class H5_BRIDGE_PUBLIC error_t : public std::exception
   {
   public:
     /**
@@ -68,6 +68,6 @@ namespace arrays
 
   }; // end: class error_t
 
-} // end: namespace arrays
+} // end: namespace h5_bridge
 
-#endif // ARRAYS__ERR_H_
+#endif // H5_BRIDGE__ERR_H_

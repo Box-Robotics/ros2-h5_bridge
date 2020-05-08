@@ -14,27 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ARRAYS__LOGGING_H_
-#define ARRAYS__LOGGING_H_
+#ifndef H5_BRIDGE__LOGGING_H_
+#define H5_BRIDGE__LOGGING_H_
 
 #define SPDLOG_ACTIVE_LEVEL 0
 
 #include <memory>
 #include <string>
 #include <spdlog/spdlog.h>
-#include <arrays/visibility_control.h>
+#include <h5_bridge/visibility_control.h>
 
-inline std::string const ARRAYS_LOGGER_NAME = "arrays";
-inline std::string const ARRAYS_LOGGER_FORMAT =
+inline std::string const H5_BRIDGE_LOGGER_NAME = "h5_bridge";
+inline std::string const H5_BRIDGE_LOGGER_FORMAT =
   "[%Y-%m-%d %H:%M:%S.%f][%t][%L][%s:%#] %v";
 
-namespace arrays
+namespace h5_bridge
 {
   /**
-   * @namespace arrays::log
+   * @namespace h5_bridge::log
    *
    * An alias for `spdlog` namespace. So, any call to `spdlog::XXX` can be
-   * replaced with `arrays::log::XXX`
+   * replaced with `h5_bridge::log::XXX`
    */
   namespace log = spdlog;
 
@@ -43,7 +43,7 @@ namespace arrays
    *
    * @return A `std::shared_ptr` to the logger.
    */
-  ARRAYS_PUBLIC std::shared_ptr<arrays::log::logger>
+  H5_BRIDGE_PUBLIC std::shared_ptr<h5_bridge::log::logger>
   get_default_logger();
 
   /**
@@ -51,8 +51,8 @@ namespace arrays
    *
    * @param[in] logger The logger to set as the library default.
    */
-  ARRAYS_PUBLIC void
-  set_default_logger(std::shared_ptr<arrays::log::logger> logger);
+  H5_BRIDGE_PUBLIC void
+  set_default_logger(std::shared_ptr<h5_bridge::log::logger> logger);
 
   /**
    * This is an in-line convenience function that allows library consumers to
@@ -65,19 +65,19 @@ namespace arrays
    * [here](https://github.com/gabime/spdlog/wiki/How-to-use-spdlog-in-DLLs).
    *
    * The general guidance is, call this function once in your library or
-   * program, then use the `ALOG_XXX` macros as usual to emit log messages.
+   * program, then use the `H5B_XXX` macros as usual to emit log messages.
    */
   inline void
-  use_arrays_logger()
-  { spdlog::set_default_logger(arrays::get_default_logger()); }
+  use_h5_bridge_logger()
+  { spdlog::set_default_logger(h5_bridge::get_default_logger()); }
 
-} // end: namespace arrays
+} // end: namespace h5_bridge
 
-#define ALOG_TRACE(...) SPDLOG_TRACE(__VA_ARGS__)
-#define ALOG_DEBUG(...) SPDLOG_DEBUG(__VA_ARGS__)
-#define ALOG_INFO(...) SPDLOG_INFO(__VA_ARGS__)
-#define ALOG_WARN(...) SPDLOG_WARN(__VA_ARGS__)
-#define ALOG_ERROR(...) SPDLOG_ERROR(__VA_ARGS__)
-#define ALOG_CRITICAL(...) SPDLOG_CRITICAL(__VA_ARGS__)
+#define H5B_TRACE(...) SPDLOG_TRACE(__VA_ARGS__)
+#define H5B_DEBUG(...) SPDLOG_DEBUG(__VA_ARGS__)
+#define H5B_INFO(...) SPDLOG_INFO(__VA_ARGS__)
+#define H5B_WARN(...) SPDLOG_WARN(__VA_ARGS__)
+#define H5B_ERROR(...) SPDLOG_ERROR(__VA_ARGS__)
+#define H5B_CRITICAL(...) SPDLOG_CRITICAL(__VA_ARGS__)
 
-#endif // ARRAYS__LOGGING_H_
+#endif // H5_BRIDGE__LOGGING_H_

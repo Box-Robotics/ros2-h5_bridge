@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ARRAYS__H5_BRIDGE_H5_FILE_IMPL_H_
-#define ARRAYS__H5_BRIDGE_H5_FILE_IMPL_H_
+#ifndef H5_BRIDGE__H5_BRIDGE_H5_FILE_IMPL_H_
+#define H5_BRIDGE__H5_BRIDGE_H5_FILE_IMPL_H_
 
 #include <array>
 #include <cstdint>
@@ -27,9 +27,9 @@
 #include <unordered_map>
 #include <vector>
 #include <H5Cpp.h>
-#include <arrays/err.hpp>
-#include <arrays/logging.hpp>
-#include <arrays/h5_bridge/h5_attr_t.hpp>
+#include <h5_bridge/err.hpp>
+#include <h5_bridge/logging.hpp>
+#include <h5_bridge/h5_attr_t.hpp>
 
 namespace fs = std::filesystem;
 using H5ObjectPtr = std::shared_ptr<H5::H5Object>;
@@ -94,14 +94,14 @@ struct H5DTypeVisitor
   { return H5::StrType(H5::PredType::C_S1, H5T_VARIABLE); }
 };
 
-const static int ARRAYS_H5_VERBOSE =
-  std::getenv("ARRAYS_H5_VERBOSE") == nullptr ? 0 : 1;
+const static int H5_BRIDGE_VERBOSE =
+  std::getenv("H5_BRIDGE_VERBOSE") == nullptr ? 0 : 1;
 
 //-----------------------------
 // Impl interface
 //-----------------------------
 
-namespace arrays::h5_bridge
+namespace h5_bridge
 {
   class H5File::Impl
   {
@@ -114,9 +114,9 @@ namespace arrays::h5_bridge
     std::vector<std::string> subgroups(const std::string& path);
     std::vector<std::string> attributes(const std::string& path);
     void set_attr(const std::string& path, const std::string& key,
-                  const arrays::h5_bridge::Attr_t& value);
+                  const h5_bridge::Attr_t& value);
     void attr(const std::string& path, const std::string& key,
-              arrays::h5_bridge::Attr_t& attr_out);
+              h5_bridge::Attr_t& attr_out);
     void flush();
 
   protected:
@@ -132,17 +132,17 @@ namespace arrays::h5_bridge
     std::string fname_;
   };
 
-} // end: namespace arrays::h5_bridge
+} // end: namespace h5_bridge
 
 //-----------------------------
 // Impl implementation
 //-----------------------------
 
-arrays::h5_bridge::H5File::Impl::Impl(
+h5_bridge::H5File::Impl::Impl(
  const std::string& path, const std::string& mode)
   : fname_(path)
 {
-  if (! ARRAYS_H5_VERBOSE)
+  if (! H5_BRIDGE_VERBOSE)
     {
       H5::Exception::dontPrint();
     }
@@ -177,32 +177,32 @@ arrays::h5_bridge::H5File::Impl::Impl(
         }
       else
         {
-          ALOG_ERROR("Unrecoginized H5 open mode: {}", mode);
-          throw(arrays::error_t(arrays::ERR_H5_BAD_MODE));
+          H5B_ERROR("Unrecoginized H5 open mode: {}", mode);
+          throw(h5_bridge::error_t(h5_bridge::ERR_H5_BAD_MODE));
         }
     }
   catch (const H5::Exception& ex)
     {
-      ALOG_ERROR("Failed to open {} with mode {}: {}",
+      H5B_ERROR("Failed to open {} with mode {}: {}",
                  path, mode, ex.getDetailMsg());
-      throw(arrays::error_t(arrays::ERR_H5_OPEN_FAILED));
+      throw(h5_bridge::error_t(h5_bridge::ERR_H5_OPEN_FAILED));
     }
 }
 
 std::string
-arrays::h5_bridge::H5File::Impl::filename()
+h5_bridge::H5File::Impl::filename()
 {
   return this->fname_;
 }
 
 void
-arrays::h5_bridge::H5File::Impl::flush()
+h5_bridge::H5File::Impl::flush()
 {
   H5Fflush(this->h5_->getId(), H5F_SCOPE_LOCAL);
 }
 
 std::string
-arrays::h5_bridge::H5File::Impl::name(hid_t id)
+h5_bridge::H5File::Impl::name(hid_t id)
 {
   std::size_t len = H5Iget_name(id, NULL, 0);
   char buffer[len];
@@ -212,9 +212,9 @@ arrays::h5_bridge::H5File::Impl::name(hid_t id)
 }
 
 std::vector<std::string>
-arrays::h5_bridge::H5File::Impl::subgroups(const std::string& path)
+h5_bridge::H5File::Impl::subgroups(const std::string& path)
 {
-  if (! ARRAYS_H5_VERBOSE)
+  if (! H5_BRIDGE_VERBOSE)
     {
       H5::Exception::dontPrint();
     }
@@ -247,26 +247,26 @@ arrays::h5_bridge::H5File::Impl::subgroups(const std::string& path)
     }
   catch (const H5::Exception& ex)
     {
-      ALOG_ERROR("While enumerating subgroups from path {}: {}",
+      H5B_ERROR("While enumerating subgroups from path {}: {}",
                  path, ex.getDetailMsg());
-      throw(arrays::error_t(arrays::ERR_H5_EXCEPTION));
+      throw(h5_bridge::error_t(h5_bridge::ERR_H5_EXCEPTION));
     }
 
   return retval;
 }
 
 std::vector<std::string>
-arrays::h5_bridge::H5File::Impl::attributes(const std::string& path)
+h5_bridge::H5File::Impl::attributes(const std::string& path)
 {
-  if (! ARRAYS_H5_VERBOSE)
+  if (! H5_BRIDGE_VERBOSE)
     {
       H5::Exception::dontPrint();
     }
 
   if (! this->is_cached(path, H5I_BADID))
     {
-      ALOG_ERROR("{} is not a cached object, instantiate it first", path);
-      throw(arrays::error_t(arrays::ERR_H5_OBJ_NOT_IN_CACHE));
+      H5B_ERROR("{} is not a cached object, instantiate it first", path);
+      throw(h5_bridge::error_t(h5_bridge::ERR_H5_OBJ_NOT_IN_CACHE));
     }
 
   auto obj = this->obj_cache_.at(path);
@@ -292,19 +292,19 @@ arrays::h5_bridge::H5File::Impl::attributes(const std::string& path)
     }
   catch (const H5::Exception& ex)
     {
-      ALOG_ERROR("While enumerating attributes from path {}: {}",
+      H5B_ERROR("While enumerating attributes from path {}: {}",
                  path, ex.getDetailMsg());
-      throw(arrays::error_t(arrays::ERR_H5_EXCEPTION));
+      throw(h5_bridge::error_t(h5_bridge::ERR_H5_EXCEPTION));
     }
 
   return retval;
 }
 
 bool
-arrays::h5_bridge::H5File::Impl::is_cached(
+h5_bridge::H5File::Impl::is_cached(
   const std::string& path, const H5I_type_t tp)
 {
-  if (! ARRAYS_H5_VERBOSE)
+  if (! H5_BRIDGE_VERBOSE)
     {
       H5::Exception::dontPrint();
     }
@@ -322,8 +322,8 @@ arrays::h5_bridge::H5File::Impl::is_cached(
             }
           else
             {
-              ALOG_ERROR("Cached object {} is of incorrect type", path);
-              throw(arrays::error_t(arrays::ERR_H5_INVALID_TYPE));
+              H5B_ERROR("Cached object {} is of incorrect type", path);
+              throw(h5_bridge::error_t(h5_bridge::ERR_H5_INVALID_TYPE));
             }
         }
       else
@@ -337,9 +337,9 @@ arrays::h5_bridge::H5File::Impl::is_cached(
 }
 
 bool
-arrays::h5_bridge::H5File::Impl::group(const std::string& path, bool create)
+h5_bridge::H5File::Impl::group(const std::string& path, bool create)
 {
-  if (! ARRAYS_H5_VERBOSE)
+  if (! H5_BRIDGE_VERBOSE)
     {
       H5::Exception::dontPrint();
     }
@@ -380,16 +380,17 @@ arrays::h5_bridge::H5File::Impl::group(const std::string& path, bool create)
                 }
               catch (const H5::Exception& ex)
                 {
-                  ALOG_ERROR("While trying to create group {}: {}",
+                  H5B_ERROR("While trying to create group {}: {}",
                              path, ex.getDetailMsg());
-                  throw(arrays::error_t(arrays::ERR_H5_CREATE_GROUP_FAILED));
+                  throw(h5_bridge::error_t(
+                          h5_bridge::ERR_H5_CREATE_GROUP_FAILED));
                 }
             }
           else
             {
-              ALOG_ERROR("While trying to open group {}: {}",
+              H5B_ERROR("While trying to open group {}: {}",
                          path, ex.getDetailMsg());
-              throw(arrays::error_t(arrays::ERR_H5_NO_SUCH_GROUP));
+              throw(h5_bridge::error_t(h5_bridge::ERR_H5_NO_SUCH_GROUP));
             }
         }
     }
@@ -399,10 +400,10 @@ arrays::h5_bridge::H5File::Impl::group(const std::string& path, bool create)
 }
 
 std::optional<H5AttrPtr>
-arrays::h5_bridge::H5File::Impl::attr_obj(
+h5_bridge::H5File::Impl::attr_obj(
   H5::H5Object *obj, const std::string& name)
 {
-  if (! ARRAYS_H5_VERBOSE)
+  if (! H5_BRIDGE_VERBOSE)
     {
       H5::Exception::dontPrint();
     }
@@ -413,35 +414,35 @@ arrays::h5_bridge::H5File::Impl::attr_obj(
     }
   catch (const H5::Exception& ex)
     {
-      ALOG_WARN("No attribute '{}' on {}: {}",
+      H5B_WARN("No attribute '{}' on {}: {}",
                 name, this->name(obj->getId()), ex.getDetailMsg());
       return std::nullopt;
     }
 }
 
 void
-arrays::h5_bridge::H5File::Impl::attr(
+h5_bridge::H5File::Impl::attr(
   const std::string& path,
   const std::string& key,
-  arrays::h5_bridge::Attr_t& attr_out)
+  h5_bridge::Attr_t& attr_out)
 {
-  if (! ARRAYS_H5_VERBOSE)
+  if (! H5_BRIDGE_VERBOSE)
     {
       H5::Exception::dontPrint();
     }
 
   if (! this->is_cached(path, H5I_BADID))
     {
-      ALOG_ERROR("{} is not a cached object, instantiate it first", path);
-      throw(arrays::error_t(arrays::ERR_H5_OBJ_NOT_IN_CACHE));
+      H5B_ERROR("{} is not a cached object, instantiate it first", path);
+      throw(h5_bridge::error_t(h5_bridge::ERR_H5_OBJ_NOT_IN_CACHE));
     }
 
   auto obj = this->obj_cache_.at(path);
   std::optional<H5AttrPtr> attr = this->attr_obj(obj.get(), key);
   if (attr == std::nullopt)
     {
-      ALOG_ERROR("Attribute {} on {} does not exist", key, path);
-      throw(arrays::error_t(arrays::ERR_H5_NO_SUCH_ATTR));
+      H5B_ERROR("Attribute {} on {} does not exist", key, path);
+      throw(h5_bridge::error_t(h5_bridge::ERR_H5_NO_SUCH_ATTR));
     }
 
   H5::DataType dt = attr.value()->getDataType();
@@ -462,26 +463,26 @@ arrays::h5_bridge::H5File::Impl::attr(
                  }
                else
                  {
-                   ALOG_ERROR("Unsupported attribute type!");
-                   throw(arrays::error_t(arrays::ERR_H5_INVALID_TYPE));
+                   H5B_ERROR("Unsupported attribute type!");
+                   throw(h5_bridge::error_t(h5_bridge::ERR_H5_INVALID_TYPE));
                  }
              }, attr_out);
 }
 
 void
-arrays::h5_bridge::H5File::Impl::set_attr(
+h5_bridge::H5File::Impl::set_attr(
   const std::string& path, const std::string& key,
-  const arrays::h5_bridge::Attr_t& value)
+  const h5_bridge::Attr_t& value)
 {
-  if (! ARRAYS_H5_VERBOSE)
+  if (! H5_BRIDGE_VERBOSE)
     {
       H5::Exception::dontPrint();
     }
 
   if (! this->is_cached(path, H5I_BADID))
     {
-      ALOG_ERROR("{} is not a cached object, instantiate it first", path);
-      throw(arrays::error_t(arrays::ERR_H5_OBJ_NOT_IN_CACHE));
+      H5B_ERROR("{} is not a cached object, instantiate it first", path);
+      throw(h5_bridge::error_t(h5_bridge::ERR_H5_OBJ_NOT_IN_CACHE));
     }
 
   auto obj = this->obj_cache_.at(path);
@@ -499,9 +500,9 @@ arrays::h5_bridge::H5File::Impl::set_attr(
         }
       catch (const H5::Exception& ex)
         {
-          ALOG_ERROR("Failed to create attribute: {} on {}: {}",
+          H5B_ERROR("Failed to create attribute: {} on {}: {}",
                      key, path, ex.getDetailMsg());
-          throw(arrays::error_t(arrays::ERR_H5_CREATE_ATTR_FAILED));
+          throw(h5_bridge::error_t(h5_bridge::ERR_H5_CREATE_ATTR_FAILED));
         }
     }
 
@@ -512,7 +513,7 @@ arrays::h5_bridge::H5File::Impl::set_attr(
     }
   catch (const H5::Exception& ex)
     {
-      throw(arrays::error_t(arrays::ERR_H5_WRITE_ATTR_FAILED));
+      throw(h5_bridge::error_t(h5_bridge::ERR_H5_WRITE_ATTR_FAILED));
     }
 }
 

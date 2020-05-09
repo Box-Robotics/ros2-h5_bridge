@@ -29,6 +29,9 @@ const int h5_bridge::ERR_H5_INVALID_TYPE = 6006;
 const int h5_bridge::ERR_H5_NO_SUCH_ATTR = 6007;
 const int h5_bridge::ERR_H5_CREATE_ATTR_FAILED = 6008;
 const int h5_bridge::ERR_H5_WRITE_ATTR_FAILED = 6009;
+const int h5_bridge::ERR_H5_OPEN_DSET_FAILED = 6010;
+const int h5_bridge::ERR_H5_CREATE_DSET_FAILED = 6011;
+const int h5_bridge::ERR_H5_WRITE_DSET_FAILED = 6012;
 
 const char *h5_bridge::strerror(int errnum)
 {
@@ -66,6 +69,15 @@ const char *h5_bridge::strerror(int errnum)
 
     case h5_bridge::ERR_H5_WRITE_ATTR_FAILED:
       return "Failed to write attribute value";
+
+    case h5_bridge::ERR_H5_OPEN_DSET_FAILED:
+      return "Failed to open DataSet";
+
+    case h5_bridge::ERR_H5_CREATE_DSET_FAILED:
+      return "Failed to create DataSet";
+
+    case h5_bridge::ERR_H5_WRITE_DSET_FAILED:
+      return "Failed to write DataSet";
 
     default:
       return ::strerror(errnum);

@@ -1,12 +1,14 @@
 #include <algorithm>
 #include <cstdint>
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <vector>
 
 #include <h5_bridge/err.hpp>
-#include <h5_bridge/logging.hpp>
 #include <h5_bridge/h5_file.hpp>
+#include <h5_bridge/logging.hpp>
+#include <h5_bridge/util.hpp>
 
 #include <gtest/gtest.h>
 
@@ -190,6 +192,90 @@ TEST(h5, GroupAttributes)
       EXPECT_STREQ(bar.c_str(), h5->attr<std::string>(grp, "bar").c_str());
     }
 }
+
+TEST(h5, DSetRW)
+{
+  auto rw = [](auto Tp, const std::string& path,
+               int rows, int cols, int chans)
+    {
+      auto h5 = std::make_unique<h5_bridge::H5File>(H5_INFILE, "a");
+      h5_bridge::H5ObjId dset;
+
+      auto vec = h5_bridge::random_vec<decltype(Tp)>(rows*cols*chans);
+      EXPECT_NO_THROW(h5->write(path, vec, rows, cols, chans));
+      dset = h5->dset(path);
+      EXPECT_FALSE(dset == std::nullopt);
+      EXPECT_NO_THROW(h5->set_attr(dset, "rows", rows));
+      EXPECT_NO_THROW(h5->set_attr(dset, "cols", cols));
+      EXPECT_NO_THROW(h5->set_attr(dset, "chans", chans));
+
+      //
+      // XXX: read back the data and make sure it looks good
+      //
+    };
+
+  //
+  // Vector
+  //
+  int rows = 100;
+  int cols = 1;
+  int chans = 1;
+
+  rw(std::uint8_t{0}, "/vector/u8", rows, cols, chans);
+  rw(std::uint16_t{0}, "/vector/u16", rows, cols, chans);
+  rw(std::int8_t{0}, "/vector/s8", rows, cols, chans);
+  rw(std::int16_t{0}, "/vector/s16", rows, cols, chans);
+  rw(std::int32_t{0}, "/vector/s32", rows, cols, chans);
+  rw(float{0.}, "/vector/f32", rows, cols, chans);
+  rw(double{0.}, "/vector/f64", rows, cols, chans);
+
+  //
+  // VGA grayscale image
+  //
+  rows = 480;
+  cols = 640;
+  chans = 1;
+
+  rw(std::uint8_t{0}, "/image/mono/u8", rows, cols, chans);
+  rw(std::uint16_t{0}, "/image/mono/u16", rows, cols, chans);
+  rw(std::int8_t{0}, "/image/mono/s8", rows, cols, chans);
+  rw(std::int16_t{0}, "/image/mono/s16", rows, cols, chans);
+  rw(std::int32_t{0}, "/image/mono/s32", rows, cols, chans);
+  rw(float{0.}, "/image/mono/f32", rows, cols, chans);
+  rw(double{0.}, "/image/mono/f64", rows, cols, chans);
+
+  //
+  // VGA rgb image
+  //
+  rows = 480;
+  cols = 640;
+  chans = 3;
+
+  rw(std::uint8_t{0}, "/image/rgb/u8", rows, cols, chans);
+  rw(std::uint16_t{0}, "/image/rgb/u16", rows, cols, chans);
+  rw(std::int8_t{0}, "/image/rgb/s8", rows, cols, chans);
+  rw(std::int16_t{0}, "/image/rgb/s16", rows, cols, chans);
+  rw(std::int32_t{0}, "/image/rgb/s32", rows, cols, chans);
+  rw(float{0.}, "/image/rgb/f32", rows, cols, chans);
+  rw(double{0.}, "/image/rgb/f64", rows, cols, chans);
+
+  //
+  // LiDAR-like "images" XYZI
+  //
+  rows = 16;
+  cols = 2048;
+  chans = 4;
+
+  rw(std::uint8_t{0}, "/lidar/16/u8", rows, cols, chans);
+  rw(std::uint16_t{0}, "/lidar/16/u16", rows, cols, chans);
+  rw(std::int8_t{0}, "/lidar/16/s8", rows, cols, chans);
+  rw(std::int16_t{0}, "/lidar/16/s16", rows, cols, chans);
+  rw(std::int32_t{0}, "/lidar/16/s32", rows, cols, chans);
+  rw(float{0.}, "/lidar/16/f32", rows, cols, chans);
+  rw(double{0.}, "/lidar/16/f64", rows, cols, chans);
+}
+
+
 
 TEST(h5, flush)
 {

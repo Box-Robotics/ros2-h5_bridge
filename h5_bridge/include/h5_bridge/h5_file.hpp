@@ -17,6 +17,7 @@
 #ifndef H5_BRIDGE__H5_BRIDGE_H5_FILE_H_
 #define H5_BRIDGE__H5_BRIDGE_H5_FILE_H_
 
+#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <optional>
@@ -25,6 +26,8 @@
 #include <vector>
 
 #include <h5_bridge/h5_attr_t.hpp>
+#include <h5_bridge/h5_dset_t.hpp>
+#include <h5_bridge/util.hpp>
 #include <h5_bridge/visibility_control.h>
 
 namespace h5_bridge
@@ -118,6 +121,16 @@ namespace h5_bridge
     h5_bridge::H5ObjId group(const std::string& path);
 
     /**
+     * Opens and caches an existing data set specified by `path`. Currently,
+     * the way to create a new data set is by calling `write` (so we know how
+     * to size the data.
+     *
+     * @param[in] path Full path to the data set to open and cache.
+     * @return An `H5ObjId` pointing to the new data set or `std::nullopt`.
+     */
+    h5_bridge::H5ObjId dset(const std::string& path);
+
+    /**
      * Provide a list of immediate subgroups of the passed-in group. This does
      * not recurse beyond the next level down the tree from the passed in
      * group. If the passed in `group` is `std::nullopt`, it will return the
@@ -196,6 +209,55 @@ namespace h5_bridge
     }
 
     /**
+     * Writes a byte buffer to a data set pointed to by `obj`. `buff` is
+     * assumed to hold a byte buffer encoding rows*cols*chans values of `T`.
+     * The data are expected to be organized as described in the `write`
+     * function below.
+     *
+     * @param[in] obj An object pointer to the data set we wish to write to
+     * @param[in] buff A byte buffer encoding of the data
+     * @param[in] rows Number of rows in the array
+     * @param[in] cols Number of columns in the array
+     * @param[in] chans Number of channels in the array
+     * @param[in] gzip The GZip compression level: 0 - 9 where 9 = most
+     *                compressed.
+     */
+    template<typename T>
+    void write(const h5_bridge::H5ObjId& obj, const std::uint8_t * buff,
+               int rows, int cols, int chans, int gzip = 0)
+    {
+      h5_bridge::DSet_t dset_t = T{0};
+      this->write(obj, buff, dset_t, rows, cols, chans, gzip);
+    }
+
+    /**
+     * Write a vector of `T` to the data set pointed to by `obj` and described
+     * by the shape `rows`, `cols`, `chans`. The assumption is that the data
+     * are stored in row-major order and each channel for a pixel is
+     * adjacent. So, something like:
+     *
+     * (0,0,0...n-1), (0,1,0...n-1), ... , (0,n-1,0...n-1)
+     *  ...
+     * (n-1,0,0...n-1), (n-1,1,0...n-1), ... , (n-1,n-1,0...n-1)
+     *
+     * @param[in] obj An object "pointer" to the data set we wish to write to.
+     *                It will be created if necessary.
+     * @param[in] buff The array/pixel data to write to the data set
+     * @param[in] rows Number of rows in the array
+     * @param[in] cols Number of columns in the array
+     * @param[in] chans Number of channels in the array
+     * @param[in] gzip The GZip compression level: 0 - 9 where 9 = most
+     *                compressed.
+     */
+    template<typename T>
+    void write(const h5_bridge::H5ObjId& obj, const std::vector<T>& buff,
+               int rows, int cols, int chans, int gzip = 0)
+    {
+      this->write<T>(obj, h5_bridge::to_bytes(buff).data(),
+                     rows, cols, chans, gzip);
+    }
+
+    /**
      * Flush buffers to disk
      */
     void flush();
@@ -203,6 +265,10 @@ namespace h5_bridge
   private:
     void attr(const h5_bridge::H5ObjId& obj, const std::string& key,
               h5_bridge::Attr_t& value_out);
+
+    void write(const h5_bridge::H5ObjId& obj, const std::uint8_t * buff,
+               const h5_bridge::DSet_t dset_t, int rows, int cols,
+               int chans, int gzip);
 
     class Impl;
     std::unique_ptr<Impl> pImpl;

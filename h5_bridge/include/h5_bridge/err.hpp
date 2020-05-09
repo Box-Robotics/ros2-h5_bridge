@@ -33,6 +33,9 @@ namespace h5_bridge
   extern H5_BRIDGE_PUBLIC const int ERR_H5_NO_SUCH_ATTR;
   extern H5_BRIDGE_PUBLIC const int ERR_H5_CREATE_ATTR_FAILED;
   extern H5_BRIDGE_PUBLIC const int ERR_H5_WRITE_ATTR_FAILED;
+  extern H5_BRIDGE_PUBLIC const int ERR_H5_OPEN_DSET_FAILED;
+  extern H5_BRIDGE_PUBLIC const int ERR_H5_CREATE_DSET_FAILED;
+  extern H5_BRIDGE_PUBLIC const int ERR_H5_WRITE_DSET_FAILED;
 
   /**
    * Human-readable string representation of an error code

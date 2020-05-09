@@ -30,6 +30,7 @@
 #include <h5_bridge/err.hpp>
 #include <h5_bridge/logging.hpp>
 #include <h5_bridge/h5_attr_t.hpp>
+#include <h5_bridge/h5_dset_t.hpp>
 
 namespace fs = std::filesystem;
 using H5ObjectPtr = std::shared_ptr<H5::H5Object>;
@@ -111,12 +112,16 @@ namespace h5_bridge
 
     std::string filename();
     bool group(const std::string& path, bool create = true);
+    bool dset(const std::string& path);
     std::vector<std::string> subgroups(const std::string& path);
     std::vector<std::string> attributes(const std::string& path);
     void set_attr(const std::string& path, const std::string& key,
                   const h5_bridge::Attr_t& value);
     void attr(const std::string& path, const std::string& key,
               h5_bridge::Attr_t& attr_out);
+    void write(const std::string& path, const std::uint8_t * buff,
+               const h5_bridge::DSet_t dset_t, int rows, int cols, int chans,
+               int gzip);
     void flush();
 
   protected:
@@ -139,7 +144,7 @@ namespace h5_bridge
 //-----------------------------
 
 h5_bridge::H5File::Impl::Impl(
- const std::string& path, const std::string& mode)
+  const std::string& path, const std::string& mode)
   : fname_(path)
 {
   if (! H5_BRIDGE_VERBOSE)
@@ -184,7 +189,7 @@ h5_bridge::H5File::Impl::Impl(
   catch (const H5::Exception& ex)
     {
       H5B_ERROR("Failed to open {} with mode {}: {}",
-                 path, mode, ex.getDetailMsg());
+                path, mode, ex.getDetailMsg());
       throw(h5_bridge::error_t(h5_bridge::ERR_H5_OPEN_FAILED));
     }
 }
@@ -248,7 +253,7 @@ h5_bridge::H5File::Impl::subgroups(const std::string& path)
   catch (const H5::Exception& ex)
     {
       H5B_ERROR("While enumerating subgroups from path {}: {}",
-                 path, ex.getDetailMsg());
+                path, ex.getDetailMsg());
       throw(h5_bridge::error_t(h5_bridge::ERR_H5_EXCEPTION));
     }
 
@@ -293,7 +298,7 @@ h5_bridge::H5File::Impl::attributes(const std::string& path)
   catch (const H5::Exception& ex)
     {
       H5B_ERROR("While enumerating attributes from path {}: {}",
-                 path, ex.getDetailMsg());
+                path, ex.getDetailMsg());
       throw(h5_bridge::error_t(h5_bridge::ERR_H5_EXCEPTION));
     }
 
@@ -334,6 +339,34 @@ h5_bridge::H5File::Impl::is_cached(
     }
 
   return false;
+}
+
+bool
+h5_bridge::H5File::Impl::dset(const std::string& path)
+{
+  if (! H5_BRIDGE_VERBOSE)
+    {
+      H5::Exception::dontPrint();
+    }
+
+  if (this->is_cached(path, H5I_DATASET))
+    {
+      return true;
+    }
+
+  H5DSetPtr dset;
+
+  try
+    {
+      dset = std::make_shared<H5::DataSet>(this->h5_->openDataSet(path));
+    }
+  catch (const H5::Exception& ex)
+    {
+      throw(h5_bridge::error_t(h5_bridge::ERR_H5_OPEN_DSET_FAILED));
+    }
+
+  this->obj_cache_.insert({path, dset});
+  return true;
 }
 
 bool
@@ -381,7 +414,7 @@ h5_bridge::H5File::Impl::group(const std::string& path, bool create)
               catch (const H5::Exception& ex)
                 {
                   H5B_ERROR("While trying to create group {}: {}",
-                             path, ex.getDetailMsg());
+                            path, ex.getDetailMsg());
                   throw(h5_bridge::error_t(
                           h5_bridge::ERR_H5_CREATE_GROUP_FAILED));
                 }
@@ -389,7 +422,7 @@ h5_bridge::H5File::Impl::group(const std::string& path, bool create)
           else
             {
               H5B_ERROR("While trying to open group {}: {}",
-                         path, ex.getDetailMsg());
+                        path, ex.getDetailMsg());
               throw(h5_bridge::error_t(h5_bridge::ERR_H5_NO_SUCH_GROUP));
             }
         }
@@ -400,8 +433,7 @@ h5_bridge::H5File::Impl::group(const std::string& path, bool create)
 }
 
 std::optional<H5AttrPtr>
-h5_bridge::H5File::Impl::attr_obj(
-  H5::H5Object *obj, const std::string& name)
+h5_bridge::H5File::Impl::attr_obj(H5::H5Object *obj, const std::string& name)
 {
   if (! H5_BRIDGE_VERBOSE)
     {
@@ -415,16 +447,16 @@ h5_bridge::H5File::Impl::attr_obj(
   catch (const H5::Exception& ex)
     {
       H5B_WARN("No attribute '{}' on {}: {}",
-                name, this->name(obj->getId()), ex.getDetailMsg());
+               name, this->name(obj->getId()), ex.getDetailMsg());
       return std::nullopt;
     }
 }
 
 void
 h5_bridge::H5File::Impl::attr(
-  const std::string& path,
-  const std::string& key,
-  h5_bridge::Attr_t& attr_out)
+ const std::string& path,
+ const std::string& key,
+ h5_bridge::Attr_t& attr_out)
 {
   if (! H5_BRIDGE_VERBOSE)
     {
@@ -471,8 +503,8 @@ h5_bridge::H5File::Impl::attr(
 
 void
 h5_bridge::H5File::Impl::set_attr(
-  const std::string& path, const std::string& key,
-  const h5_bridge::Attr_t& value)
+ const std::string& path, const std::string& key,
+ const h5_bridge::Attr_t& value)
 {
   if (! H5_BRIDGE_VERBOSE)
     {
@@ -501,7 +533,7 @@ h5_bridge::H5File::Impl::set_attr(
       catch (const H5::Exception& ex)
         {
           H5B_ERROR("Failed to create attribute: {} on {}: {}",
-                     key, path, ex.getDetailMsg());
+                    key, path, ex.getDetailMsg());
           throw(h5_bridge::error_t(h5_bridge::ERR_H5_CREATE_ATTR_FAILED));
         }
     }
@@ -515,6 +547,79 @@ h5_bridge::H5File::Impl::set_attr(
     {
       throw(h5_bridge::error_t(h5_bridge::ERR_H5_WRITE_ATTR_FAILED));
     }
+}
+
+void
+h5_bridge::H5File::Impl::write(
+  const std::string& path, const std::uint8_t * buff,
+  const h5_bridge::DSet_t dset_t,
+  int rows, int cols, int chans, int gzip)
+{
+  if (! H5_BRIDGE_VERBOSE)
+    {
+      H5::Exception::dontPrint();
+    }
+
+  hsize_t maxdims[3] = {H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED};
+  hsize_t dims[3] = {static_cast<hsize_t>(rows),
+                     static_cast<hsize_t>(cols),
+                     static_cast<hsize_t>(chans)};
+
+  int rank = chans >= 3 ? 3 : 2;
+  H5::DataSpace dspace(rank, dims, maxdims);
+  H5::DataType dtype = std::visit(H5DTypeVisitor(), dset_t);
+
+  H5DSetPtr dset;
+
+  try
+    {
+      if (this->dset(path))
+        {
+          dset =
+            std::dynamic_pointer_cast<H5::DataSet>(this->obj_cache_.at(path));
+          dset->extend(dims);
+        }
+    }
+  catch (const h5_bridge::error_t& ex)
+    {
+      try
+        {
+          H5::DSetCreatPropList prop;
+          prop.setChunk(rank, dims);
+          if ((gzip > 0) && (gzip <= 9))
+            {
+              prop.setDeflate(gzip);
+            }
+
+          if (! this->group(fs::path(path).remove_filename().string()))
+            {
+              H5B_ERROR("Could not create path to new dataset: {}",
+                        path);
+              throw(h5_bridge::error_t(h5_bridge::ERR_H5_CREATE_DSET_FAILED));
+            }
+
+          dset = std::make_shared<H5::DataSet>(
+            this->h5_->createDataSet(path, dtype, dspace, prop));
+        }
+      catch (const H5::Exception& ex)
+        {
+          H5B_ERROR("Failed to create dataset: {}: {}",
+                    path, ex.getDetailMsg());
+          throw(h5_bridge::error_t(h5_bridge::ERR_H5_CREATE_DSET_FAILED));
+        }
+    }
+
+  try
+    {
+      dset->write(buff, dtype);
+    }
+  catch (const H5::Exception& ex)
+    {
+      H5B_ERROR("Could not write dataset {}: {}", path, ex.getDetailMsg());
+      throw(h5_bridge::error_t(h5_bridge::ERR_H5_WRITE_DSET_FAILED));
+    }
+
+  this->obj_cache_.insert({path, dset});
 }
 
 #endif // ARRAYS__H5_BRIDGE_H5_FILE_IMPL_H_

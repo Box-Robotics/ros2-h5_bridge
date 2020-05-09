@@ -63,6 +63,24 @@ h5_bridge::H5File::group(const std::string& path)
   return std::nullopt;
 }
 
+h5_bridge::H5ObjId
+h5_bridge::H5File::dset(const std::string& path)
+{
+  try
+    {
+      if (this->pImpl->dset(path))
+        {
+          return path;
+        }
+    }
+  catch (const h5_bridge::error_t& ex)
+    {
+      return std::nullopt;
+    }
+
+  return std::nullopt;
+}
+
 std::vector<std::string>
 h5_bridge::H5File::subgroups(const h5_bridge::H5ObjId& group)
 {
@@ -109,4 +127,17 @@ void
 h5_bridge::H5File::flush()
 {
   this->pImpl->flush();
+}
+
+void
+h5_bridge::H5File::write(
+  const h5_bridge::H5ObjId& obj,
+  const std::uint8_t * buff,
+  const h5_bridge::DSet_t dset_t,
+  int rows, int cols, int chans, int gzip)
+{
+  if (obj.has_value())
+    {
+      this->pImpl->write(obj.value(), buff, dset_t, rows, cols, chans, gzip);
+    }
 }

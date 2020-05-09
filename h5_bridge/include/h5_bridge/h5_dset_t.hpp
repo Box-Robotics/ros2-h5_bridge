@@ -14,28 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef H5_BRIDGE__H5_BRIDGE_H5_ATTR_T_H_
-#define H5_BRIDGE__H5_BRIDGE_H5_ATTR_T_H_
+#ifndef H5_BRIDGE__H5_BRIDGE_H5_DSET_T_H_
+#define H5_BRIDGE__H5_BRIDGE_H5_DSET_T_H_
 
 #include <cstdint>
-#include <string>
 #include <variant>
 
 namespace h5_bridge
 {
-  using Attr_t = std::variant<std::uint8_t,
-                              std::uint16_t,
-                              std::uint32_t,
-                              std::uint64_t,
+  using DSet_t = std::variant<std::uint8_t,
                               std::int8_t,
+                              std::uint16_t,
                               std::int16_t,
                               std::int32_t,
-                              std::int64_t,
                               float,
-                              double,
-                              bool,
-                              std::string>;
+                              double>;
 
 } // end: namespace h5_bridge
 
-#endif // H5_BRIDGE__H5_BRIDGE_H5_ATTR_T_H_
+#endif // H5_BRIDGE__H5_BRIDGE_H5_DSET_T_H_

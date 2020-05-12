@@ -17,16 +17,21 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
+#include <exception>
 #include <filesystem>
+#include <fstream>
 #include <memory>
 #include <mutex>
 #include <sstream>
 #include <system_error>
 #include <thread>
+#include <ament_index_cpp/get_package_prefix.hpp>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <spdlog/spdlog.h>
 #include <spdlog/async.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <yaml-cpp/yaml.h>
 
 namespace fs = std::filesystem;
 
@@ -209,41 +214,200 @@ std::once_flag h5_bridge::Logging::init_;
 
 INITIALIZER(h5_bridge_ctor)
 {
-  //
-  // Environment variables controlling our logging setup
-  //
-  int log_level = std::getenv("H5_BRIDGE_LOG_LEVEL") == nullptr ?
-    spdlog::level::info : std::atoi(std::getenv("H5_BRIDGE_LOG_LEVEL"));
+  std::string yaml = "";
+  bool yaml_ok = false;
+  YAML::Node root_node;
 
-  int log_flush_level = std::getenv("H5_BRIDGE_LOG_FLUSH_LEVEL") == nullptr ?
-    spdlog::level::trace : std::atoi(std::getenv("H5_BRIDGE_LOG_FLUSH_LEVEL"));
+  try
+    {
+      auto share_dir =
+        ament_index_cpp::get_package_share_directory("h5_bridge");
+      auto config_file = share_dir + "/etc/h5_bridge_logging.yaml";
 
-  std::string log_dir = std::getenv("H5_BRIDGE_LOG_DIR") == nullptr ?
-    "/tmp" : std::string(std::getenv("H5_BRIDGE_LOG_DIR"));
+      if (fs::exists(config_file))
+        {
+          std::ifstream ifs(config_file, std::ios::in);
+          yaml.assign((std::istreambuf_iterator<char>(ifs)),
+                      (std::istreambuf_iterator<char>()));
+          yaml_ok = true;
+        }
 
-  std::string log_file = std::getenv("H5_BRIDGE_LOG_FILE") == nullptr ?
-    "" : std::string(std::getenv("H5_BRIDGE_LOG_FILE"));
+      root_node = YAML::Load(yaml);
+    }
+  catch (const ament_index_cpp::PackageNotFoundError& ex)
+    {
+      yaml_ok = false;
+    }
+  catch (const std::exception & ex)
+    {
+      yaml_ok = false;
+    }
 
-  // 5 MB max log file size by default
-  std::size_t log_max_file_size =
-    std::getenv("H5_BRIDGE_LOG_MAX_FILE_SIZE") == nullptr ?
-    1024*1024*5 : std::atoi(std::getenv("H5_BRIDGE_LOG_MAX_FILE_SIZE"));
 
-  std::size_t log_max_files =
-    std::getenv("H5_BRIDGE_LOG_MAX_FILES") == nullptr ?
-    5 : std::atoi(std::getenv("H5_BRIDGE_LOG_MAX_FILES"));
+  int log_level = spdlog::level::info;
+  try
+    {
+      if (std::getenv("H5_BRIDGE_LOG_LEVEL") == nullptr)
+        {
+          if (yaml_ok && root_node["log_level"])
+            {
+              log_level = root_node["log_level"].as<int>();
+            }
+        }
+      else
+        {
+          log_level = std::atoi(std::getenv("H5_BRIDGE_LOG_LEVEL"));
+        }
+    }
+  catch (const std::exception& ex)
+    { }
 
-  std::size_t log_queue_size =
-    std::getenv("H5_BRIDGE_LOG_ASYNC_QUEUE_SIZE") == nullptr ?
-    8192 : std::atoi(std::getenv("H5_BRIDGE_LOG_ASYNC_QUEUE_SIZE"));
+  int log_flush_level = spdlog::level::trace;
+  try
+    {
+      if (std::getenv("H5_BRIDGE_LOG_FLUSH_LEVEL") == nullptr)
+        {
+          if (yaml_ok && root_node["flush_level"])
+            {
+              log_flush_level = root_node["flush_level"].as<int>();
+            }
+        }
+      else
+        {
+          log_flush_level = std::atoi(std::getenv("H5_BRIDGE_LOG_FLUSH_LEVEL"));
+        }
+    }
+  catch (const std::exception& ex)
+    { }
 
-  std::size_t log_nthreads =
-    std::getenv("H5_BRIDGE_LOG_ASYNC_QUEUE_NTHREADS") == nullptr ?
-    1 : std::atoi(std::getenv("H5_BRIDGE_LOG_ASYNC_QUEUE_NTHREADS"));
+  std::string log_dir = "/tmp";
+  try
+    {
+      if (std::getenv("H5_BRIDGE_LOG_DIR") == nullptr)
+        {
+          if (yaml_ok && root_node["log_dir"])
+            {
+              log_dir = root_node["log_dir"].as<std::string>();
+            }
+        }
+      else
+        {
+          log_dir = std::string(std::getenv("H5_BRIDGE_LOG_DIR"));
+        }
+    }
+  catch (const std::exception& ex)
+    { }
 
-  std::string format =
-    std::getenv("H5_BRIDGE_LOG_FORMAT") == nullptr ?
-    H5_BRIDGE_LOGGER_FORMAT : std::string(std::getenv("H5_BRIDGE_LOG_FORMAT"));
+  std::string log_file = "";
+  try
+    {
+      if (std::getenv("H5_BRIDGE_LOG_FILE") == nullptr)
+        {
+          if (yaml_ok && root_node["log_file"])
+            {
+              log_file = root_node["log_file"].as<std::string>();
+            }
+        }
+      else
+        {
+          log_file = std::string(std::getenv("H5_BRIDGE_LOG_FILE"));
+        }
+    }
+  catch (const std::exception& ex)
+    { }
+
+  std::size_t log_max_file_size = 1024*1024*5;
+  try
+    {
+      if (std::getenv("H5_BRIDGE_LOG_MAX_FILE_SIZE") == nullptr)
+        {
+          if (yaml_ok && root_node["max_file_size"])
+            {
+              log_max_file_size = root_node["max_file_size"].as<std::size_t>();
+            }
+        }
+      else
+        {
+          log_max_file_size =
+            std::atoi(std::getenv("H5_BRIDGE_LOG_MAX_FILE_SIZE"));
+        }
+    }
+  catch (const std::exception& ex)
+    { }
+
+  std::size_t log_max_files = 5;
+  try
+    {
+      if (std::getenv("H5_BRIDGE_LOG_MAX_FILES") == nullptr)
+        {
+          if (yaml_ok && root_node["max_files"])
+            {
+              log_max_files = root_node["max_files"].as<std::size_t>();
+            }
+        }
+      else
+        {
+          log_max_files = std::atoi(std::getenv("H5_BRIDGE_LOG_MAX_FILES"));
+        }
+    }
+  catch (const std::exception& ex)
+    { }
+
+  std::size_t log_queue_size = 8192;
+  try
+    {
+      if (std::getenv("H5_BRIDGE_LOG_ASYNC_QUEUE_SIZE") == nullptr)
+        {
+          if (yaml_ok && root_node["queue_size"])
+            {
+              log_queue_size = root_node["queue_size"].as<std::size_t>();
+            }
+        }
+      else
+        {
+          log_queue_size =
+            std::atoi(std::getenv("H5_BRIDGE_LOG_ASYNC_QUEUE_SIZE"));
+        }
+    }
+  catch (const std::exception& ex)
+    { }
+
+  std::size_t log_nthreads = 1;
+  try
+    {
+      if (std::getenv("H5_BRIDGE_LOG_ASYNC_QUEUE_NTHREADS") == nullptr)
+        {
+          if (yaml_ok && root_node["n_threads"])
+            {
+              log_nthreads = root_node["n_threads"].as<std::size_t>();
+            }
+        }
+      else
+        {
+          log_nthreads =
+            std::atoi(std::getenv("H5_BRIDGE_LOG_ASYNC_QUEUE_NTHREADS"));
+        }
+    }
+  catch (const std::exception& ex)
+    { }
+
+  std::string format = H5_BRIDGE_LOGGER_FORMAT;
+  try
+    {
+      if (std::getenv("H5_BRIDGE_LOG_FORMAT") == nullptr)
+        {
+          if (yaml_ok && root_node["logger_format"])
+            {
+              format = root_node["logger_format"].as<std::string>();
+            }
+        }
+      else
+        {
+          format = std::string(std::getenv("H5_BRIDGE_LOG_FORMAT"));
+        }
+    }
+  catch (const std::exception& ex)
+    { }
 
   h5_bridge::Logging::Init(log_level,
                            log_flush_level,

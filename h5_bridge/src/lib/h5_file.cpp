@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 #include <h5_bridge/h5_file.hpp>
+#include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <tuple>
+#include <vector>
 #include <h5_bridge/err.hpp>
+#include <h5_bridge/h5_dset_t.hpp>
 #include <impl/h5_file_impl.hpp>
 
 namespace fs = std::filesystem;
@@ -93,6 +97,12 @@ h5_bridge::H5File::attributes(const h5_bridge::H5ObjId& obj)
   return this->pImpl->attributes(obj.value_or("/"));
 }
 
+std::vector<std::string>
+h5_bridge::H5File::datasets(const h5_bridge::H5ObjId& group)
+{
+  return this->pImpl->datasets(group.value_or("/"));
+}
+
 void
 h5_bridge::H5File::set_attr(
   const h5_bridge::H5ObjId& obj,
@@ -124,6 +134,19 @@ h5_bridge::H5File::attr(
 }
 
 void
+h5_bridge::H5File::clear(const h5_bridge::H5ObjId& obj)
+{
+  if (obj.has_value())
+    {
+      this->pImpl->clear(obj.value());
+    }
+  else
+    {
+      this->pImpl->clear_all();
+    }
+}
+
+void
 h5_bridge::H5File::flush()
 {
   this->pImpl->flush();
@@ -140,4 +163,18 @@ h5_bridge::H5File::write(
     {
       this->pImpl->write(obj.value(), buff, dset_t, rows, cols, chans, gzip);
     }
+}
+
+std::tuple<h5_bridge::DSet_t, int, int, int>
+h5_bridge::H5File::get_shape(const h5_bridge::H5ObjId& obj)
+{
+  return this->pImpl->read(obj.value());
+}
+
+void
+h5_bridge::H5File::read(const h5_bridge::H5ObjId& obj,
+                        std::uint8_t * buff)
+{
+  std::tie(std::ignore, std::ignore, std::ignore, std::ignore) =
+    this->pImpl->read(obj.value(), buff);
 }

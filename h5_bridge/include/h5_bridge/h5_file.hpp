@@ -23,10 +23,12 @@
 #include <optional>
 #include <string>
 #include <type_traits>
+#include <tuple>
 #include <vector>
 
 #include <h5_bridge/h5_attr_t.hpp>
 #include <h5_bridge/h5_dset_t.hpp>
+#include <h5_bridge/err.hpp>
 #include <h5_bridge/util.hpp>
 #include <h5_bridge/visibility_control.h>
 
@@ -160,6 +162,15 @@ namespace h5_bridge
     std::vector<std::string> attributes(const h5_bridge::H5ObjId& obj);
 
     /**
+     * Provides a list of datasets that are children of the passed in group. If
+     * std::nullopt is passed in, "/" is assumed.
+     *
+     * @param[in] obj The group whose datasets we wish to list
+     * @return A vector of strings of the names of the child datasets
+     */
+    std::vector<std::string> datasets(const h5_bridge::H5ObjId& group);
+
+    /**
      * Annotates an object `obj` with a scalar attribute
      *
      * @param[in] obj The object we wish to annotate
@@ -253,16 +264,78 @@ namespace h5_bridge
     void write(const h5_bridge::H5ObjId& obj, const std::vector<T>& buff,
                int rows, int cols, int chans, int gzip = 0)
     {
-      this->write<T>(obj, h5_bridge::to_bytes(buff).data(),
+      this->write<T>(obj, reinterpret_cast<const std::uint8_t *>(buff.data()),
                      rows, cols, chans, gzip);
     }
+
+    /**
+     * Reads the data set pointed to by `obj` and returns its shape
+     *
+     * @param[in] obj An object "pointer" to the data set we wish to read
+     *                from.
+     * @return A 4-tuple of:
+     *         [0] - The datatype of the data set
+     *         [1] - The number of rows in the data set
+     *         [2] - The number of cols in the data set
+     *         [3] - The number of channels in the data set
+     */
+    std::tuple<h5_bridge::DSet_t, int, int, int>
+    get_shape(const h5_bridge::H5ObjId& obj);
+
+    /**
+     * Reads the data set pointed to by `obj`
+     *
+     * The template parameter `T` is tested against the underlying data. If `T`
+     * does not match the data type stored in H5, an exception is thrown.
+     *
+     * @param[in] obj An object "pointer" to the data set we wish to read
+     *                from.
+     *
+     * @return A 4-tuple of:
+     *         [0] - A vector of `T` representing the data in the dataset
+     *         [1] - The number of rows in the data set
+     *         [2] - The number of cols in the data set
+     *         [3] - The number of channels in the data set
+     */
+    template<typename T>
+    std::tuple<std::vector<T>, int, int, int>
+    read(const h5_bridge::H5ObjId& obj)
+    {
+      auto [tp, rows, cols, chans] = this->get_shape(obj);
+      try
+        {
+          auto var = std::get<T>(tp);
+        }
+      catch (const std::bad_variant_access& ex)
+        {
+          throw(h5_bridge::error_t(h5_bridge::ERR_H5_INVALID_TYPE));
+        }
+
+      std::vector<T> retval(rows*cols*chans);
+      this->read(obj, reinterpret_cast<std::uint8_t *>(retval.data()));
+
+      return std::make_tuple(retval, rows, cols, chans);
+    }
+
+    /**
+     * Clears the object cache. If the passed in `obj` points to a valid
+     * object, it is cleared from the internally wrapped cache. If the pointed
+     * to object does not exist in the cache, this function is a NOOP. If the
+     * passed in `obj` is std::nullopt, the entire cache is cleared.
+     *
+     * @param[in] obj The object id to clear
+     */
+    void clear(const h5_bridge::H5ObjId& obj);
 
     /**
      * Flush buffers to disk
      */
     void flush();
 
-  private:
+    //
+    // XXX: Document these functions
+    //
+
     void attr(const h5_bridge::H5ObjId& obj, const std::string& key,
               h5_bridge::Attr_t& value_out);
 
@@ -270,6 +343,9 @@ namespace h5_bridge
                const h5_bridge::DSet_t dset_t, int rows, int cols,
                int chans, int gzip);
 
+    void read(const h5_bridge::H5ObjId& obj, std::uint8_t * buff);
+
+  private:
     class Impl;
     std::unique_ptr<Impl> pImpl;
 

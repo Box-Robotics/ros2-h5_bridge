@@ -17,6 +17,7 @@
 #ifndef H5_BRIDGE__H5_BRIDGE_H5_FILE_IMPL_H_
 #define H5_BRIDGE__H5_BRIDGE_H5_FILE_IMPL_H_
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <cstdlib>
@@ -24,6 +25,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <vector>
 #include <H5Cpp.h>
@@ -115,6 +117,7 @@ namespace h5_bridge
     bool dset(const std::string& path);
     std::vector<std::string> subgroups(const std::string& path);
     std::vector<std::string> attributes(const std::string& path);
+    std::vector<std::string> datasets(const std::string& path);
     void set_attr(const std::string& path, const std::string& key,
                   const h5_bridge::Attr_t& value);
     void attr(const std::string& path, const std::string& key,
@@ -122,6 +125,10 @@ namespace h5_bridge
     void write(const std::string& path, const std::uint8_t * buff,
                const h5_bridge::DSet_t dset_t, int rows, int cols, int chans,
                int gzip);
+    std::tuple<h5_bridge::DSet_t, int, int, int>
+    read(const std::string& path, std::uint8_t * buff = nullptr);
+    void clear(const std::string& path);
+    void clear_all();
     void flush();
 
   protected:
@@ -201,6 +208,18 @@ h5_bridge::H5File::Impl::filename()
 }
 
 void
+h5_bridge::H5File::Impl::clear(const std::string& path)
+{
+  this->obj_cache_.erase(path);
+}
+
+void
+h5_bridge::H5File::Impl::clear_all()
+{
+  this->obj_cache_.clear();
+}
+
+void
 h5_bridge::H5File::Impl::flush()
 {
   H5Fflush(this->h5_->getId(), H5F_SCOPE_LOCAL);
@@ -214,6 +233,61 @@ h5_bridge::H5File::Impl::name(hid_t id)
   H5Iget_name(id, buffer, len+1);
   std::string n = buffer;
   return n;
+}
+
+std::vector<std::string>
+h5_bridge::H5File::Impl::datasets(const std::string& path)
+{
+  if (! H5_BRIDGE_VERBOSE)
+    {
+      H5::Exception::dontPrint();
+    }
+
+  std::vector<std::string> retval;
+  if (! this->group(path, false))
+    {
+      return retval;
+    }
+
+  auto group = this->obj_cache_.at(path);
+  std::vector<std::tuple<int, int, std::string>> elem_vec;
+
+  try
+    {
+      (void) this->h5_->iterateElems(
+        path.c_str(),
+        nullptr,
+        [](hid_t loc_id,
+           const char *name,
+           void *op_data) -> herr_t
+        {
+          auto *v =
+            static_cast<std::vector<std::tuple<int,int,std::string>>*>(op_data);
+
+          int idx = v->size();
+          int obj_type = H5Gget_objtype_by_idx(loc_id, idx);
+          v->push_back(std::make_tuple(idx, obj_type, std::string(name)));
+
+          return 0;
+        },
+        &elem_vec);
+    }
+  catch (const H5::Exception& ex)
+    {
+      H5B_ERROR("While enumerating datasets from path {}: {}",
+                path, ex.getDetailMsg());
+      throw(h5_bridge::error_t(h5_bridge::ERR_H5_EXCEPTION));
+    }
+
+  for (auto& tup : elem_vec)
+    {
+      if (std::get<1>(tup) == H5G_DATASET)
+        {
+          retval.push_back(std::get<2>(tup));
+        }
+    }
+
+  return retval;
 }
 
 std::vector<std::string>
@@ -620,6 +694,77 @@ h5_bridge::H5File::Impl::write(
     }
 
   this->obj_cache_.insert({path, dset});
+}
+
+std::tuple<h5_bridge::DSet_t, int, int, int>
+h5_bridge::H5File::Impl::read(const std::string& path, std::uint8_t * buff)
+{
+  if (! H5_BRIDGE_VERBOSE)
+    {
+      H5::Exception::dontPrint();
+    }
+
+  H5DSetPtr dset;
+  if (this->dset(path))
+    {
+      dset =
+        std::dynamic_pointer_cast<H5::DataSet>(this->obj_cache_.at(path));
+    }
+
+  H5::DataType dt = dset->getDataType();
+  h5_bridge::DSet_t tp;
+
+  if (dt == H5::PredType::NATIVE_UINT8)
+    {
+      tp = std::uint8_t{0};
+    }
+  else if (dt == H5::PredType::NATIVE_INT8)
+    {
+      tp = std::int8_t{0};
+    }
+  else if (dt == H5::PredType::NATIVE_UINT16)
+    {
+      tp = std::uint16_t{0};
+    }
+  else if (dt == H5::PredType::NATIVE_INT16)
+    {
+      tp = std::int16_t{0};
+    }
+  else if (dt == H5::PredType::NATIVE_INT32)
+    {
+      tp = std::int32_t{0};
+    }
+  else if (dt == H5::PredType::NATIVE_FLOAT)
+    {
+      tp = float{0.0};
+    }
+  else if (dt == H5::PredType::NATIVE_DOUBLE)
+    {
+      tp = double{0.0};
+    }
+
+  H5::DataSpace file_space = dset->getSpace();
+  hsize_t dims_out[file_space.getSimpleExtentNdims()];
+  int rank = file_space.getSimpleExtentDims(dims_out, nullptr);
+
+  int nchans = 1;
+  if (rank == 3)
+    {
+      nchans = dims_out[2];
+    }
+  int rows = dims_out[0];
+  int cols = rank == 1 ? 1 : dims_out[1];
+
+  if (buff != nullptr)
+    {
+      dset->read(buff,
+                 dt,
+                 H5::DataSpace(rank, dims_out),
+                 file_space);
+    }
+
+  dset->close();
+  return std::make_tuple(tp, rows, cols, nchans);
 }
 
 #endif // ARRAYS__H5_BRIDGE_H5_FILE_IMPL_H_

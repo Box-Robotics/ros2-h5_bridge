@@ -1,15 +1,11 @@
 #include <algorithm>
 #include <cstdint>
 #include <filesystem>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
-
-#include <h5_bridge/err.hpp>
-#include <h5_bridge/h5_file.hpp>
-#include <h5_bridge/logging.hpp>
-#include <h5_bridge/util.hpp>
-
+#include <h5_bridge.hpp>
 #include <gtest/gtest.h>
 
 namespace fs = std::filesystem;
@@ -195,13 +191,17 @@ TEST(h5, GroupAttributes)
 
 TEST(h5, DSetRW)
 {
-  auto rw = [](auto Tp, const std::string& path,
-               int rows, int cols, int chans)
+  auto h5 = std::make_unique<h5_bridge::H5File>(H5_INFILE, "a");
+
+  auto rw = [&h5](auto Tp, const std::string& path,
+                  int rows, int cols, int chans)
     {
-      auto h5 = std::make_unique<h5_bridge::H5File>(H5_INFILE, "a");
       h5_bridge::H5ObjId dset;
 
+      // create the data
       auto vec = h5_bridge::random_vec<decltype(Tp)>(rows*cols*chans);
+
+      // write the data
       EXPECT_NO_THROW(h5->write(path, vec, rows, cols, chans));
       dset = h5->dset(path);
       EXPECT_FALSE(dset == std::nullopt);
@@ -209,10 +209,24 @@ TEST(h5, DSetRW)
       EXPECT_NO_THROW(h5->set_attr(dset, "cols", cols));
       EXPECT_NO_THROW(h5->set_attr(dset, "chans", chans));
 
-      //
-      // XXX: read back the data and make sure it looks good
-      //
+      // read the data
+      auto [dset_t, ROWS, COLS, CHANS] = h5->get_shape(dset);
+      EXPECT_EQ(rows, ROWS);
+      EXPECT_EQ(cols, COLS);
+      EXPECT_EQ(chans, CHANS);
+      EXPECT_NO_THROW(std::get<decltype(Tp)>(dset_t));
+
+      // make sure whate we read out is what we wrote in
+      auto [out_vec, R_, C_, CH_] = h5->read<decltype(Tp)>(dset);
+      EXPECT_EQ(rows, R_);
+      EXPECT_EQ(cols, C_);
+      EXPECT_EQ(chans, CHANS);
+      EXPECT_TRUE(vec == out_vec);
     };
+
+  std::vector<std::string> dset_names =
+    {"u8", "u16", "s8", "s16", "s32", "f32", "f64"};
+  std::sort(dset_names.begin(), dset_names.end());
 
   //
   // Vector
@@ -229,6 +243,10 @@ TEST(h5, DSetRW)
   rw(float{0.}, "/vector/f32", rows, cols, chans);
   rw(double{0.}, "/vector/f64", rows, cols, chans);
 
+  auto dsets = h5->datasets("/vector");
+  std::sort(dsets.begin(), dsets.end());
+  EXPECT_TRUE(dsets == dset_names);
+
   //
   // VGA grayscale image
   //
@@ -243,6 +261,10 @@ TEST(h5, DSetRW)
   rw(std::int32_t{0}, "/image/mono/s32", rows, cols, chans);
   rw(float{0.}, "/image/mono/f32", rows, cols, chans);
   rw(double{0.}, "/image/mono/f64", rows, cols, chans);
+
+  dsets = h5->datasets("/image/mono");
+  std::sort(dsets.begin(), dsets.end());
+  EXPECT_TRUE(dsets == dset_names);
 
   //
   // VGA rgb image
@@ -259,6 +281,10 @@ TEST(h5, DSetRW)
   rw(float{0.}, "/image/rgb/f32", rows, cols, chans);
   rw(double{0.}, "/image/rgb/f64", rows, cols, chans);
 
+  dsets = h5->datasets("/image/rgb");
+  std::sort(dsets.begin(), dsets.end());
+  EXPECT_TRUE(dsets == dset_names);
+
   //
   // LiDAR-like "images" XYZI
   //
@@ -273,9 +299,48 @@ TEST(h5, DSetRW)
   rw(std::int32_t{0}, "/lidar/16/s32", rows, cols, chans);
   rw(float{0.}, "/lidar/16/f32", rows, cols, chans);
   rw(double{0.}, "/lidar/16/f64", rows, cols, chans);
+
+  dsets = h5->datasets("/lidar/16");
+  std::sort(dsets.begin(), dsets.end());
+  EXPECT_TRUE(dsets == dset_names);
 }
 
+TEST(h5, DSetRWTypeCheck)
+{
+  auto h5 = std::make_unique<h5_bridge::H5File>(H5_INFILE, "a");
+  auto in = h5_bridge::random_vec<float>(100*100*3);
 
+  EXPECT_NO_THROW(h5->write("/type_check/f32", in, 100, 100, 3));
+
+  EXPECT_THROW(h5->read<int>("/type_check/f32"), h5_bridge::error_t);
+
+  std::vector<float> out;
+  int rows, cols, chans;
+  EXPECT_NO_THROW(std::tie(out, rows, cols, chans) =
+                  h5->read<float>("/type_check/f32"));
+  EXPECT_EQ(rows, 100);
+  EXPECT_EQ(cols, 100);
+  EXPECT_EQ(chans, 3);
+  EXPECT_TRUE(in == out);
+}
+
+TEST(h5, object_cache)
+{
+  auto h5 = std::make_unique<h5_bridge::H5File>(H5_INFILE, "a");
+  EXPECT_NO_THROW(h5->clear("/a/non/existent/cache/item"));
+
+  for (auto g : GROUP_NAMES)
+    {
+      EXPECT_NO_THROW(auto grp = h5->group(g));
+    }
+
+  EXPECT_NO_THROW(h5->clear(std::nullopt));
+
+  for (auto g : GROUP_NAMES)
+    {
+      EXPECT_NO_THROW(auto grp = h5->group(g));
+    }
+}
 
 TEST(h5, flush)
 {

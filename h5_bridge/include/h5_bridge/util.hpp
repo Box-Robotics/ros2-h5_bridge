@@ -27,55 +27,6 @@
 namespace h5_bridge
 {
   /**
-   * Converts a value of type `T` to a host-ordered byte array
-   *
-   * @param[in] in The input value to convert to bytes
-   * @param[out] out The buffer to fill with the byte encoding of `in`. We
-   *                 assume it is large enough.
-   */
-  template<typename T>
-  void to_bytes(const T in, unsigned char * out)
-  {
-    union
-    {
-      T v;
-      unsigned char bytes[sizeof(T)];
-    } value;
-
-    value.v = in;
-
-#if !defined(_WIN32) && __BYTE_ORDER == __ORDER_BIG_ENDIAN__
-    std::copy(value.bytes, value.bytes + sizeof(T), out);
-#else
-    std::reverse_copy(value.bytes, value.bytes + sizeof(T), out);
-#endif
-  }
-
-  /**
-   * Converts a vector of values of type `T` to a vector of bytes representing
-   * the input `in` in the hosts byte ordering.
-   *
-   * @param[in] in The vector of values to convert to bytes
-   * @return A byte array representing the data of input vector `in`.
-   */
-  template<typename T>
-  std::vector<std::uint8_t>
-  to_bytes(const std::vector<T>& in)
-  {
-    std::vector<std::uint8_t> out;
-    out.resize(in.size()*sizeof(T));
-
-    int out_idx = 0;
-    for (auto pixel : in)
-      {
-        to_bytes(pixel, out.data() + out_idx);
-        out_idx += sizeof(pixel);
-      }
-
-    return out;
-  }
-
-  /**
    * Generates a random vector consisting of `n_elems` of type `T`. If `T` is a
    * floating point type, we draw values from a standard normal
    * distribution. Otherwise, we assume `T` is an integer type and we use a
@@ -103,6 +54,28 @@ namespace h5_bridge
       }
 
     return retval;
+  }
+
+  /**
+   * Runtime endian check
+   *
+   * @return True if the current machine is little endian
+   */
+  inline bool little_endian()
+  {
+    std::uint16_t dummy = 0x1;
+    std::uint8_t *dummy_ptr = reinterpret_cast<std::uint8_t*>(&dummy);
+    return dummy_ptr[0] == 0x1 ? true : false;
+  }
+
+  /**
+   * Runtime endian check
+   *
+   * @return True if the current machine is big endian
+   */
+  inline bool big_endian()
+  {
+    return ! h5_bridge::little_endian();
   }
 
 } // end: namespace h5_bridge

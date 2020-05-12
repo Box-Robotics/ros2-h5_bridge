@@ -1,0 +1,42 @@
+#
+# spdlog config for h5_bridge
+#
+{
+  #
+  # spdlog log levels:
+  #
+  # 0 = trace
+  # 1 = debug
+  # 2 = info
+  # 3 = warn
+  # 4 = error
+  # 5 = critical
+  # 6 = off
+  #
+  log_level: 4,
+  flush_level: 0,
+
+  #
+  # location of where to write our log
+  #
+  log_dir: "/tmp",
+  log_file: "h5_bridge.log",
+
+  #
+  # how many async logging threads to run and how many messages to queue before
+  # dropping.
+  #
+  n_threads: 1,
+  queue_size: 8192,
+
+  #
+  # how many log files to maintain and when to rotate
+  #
+  max_files: 5,
+  max_file_size: 5242880,
+
+  #
+  # how to format log messages (see spdlog docs)
+  #
+  logger_format: "[%Y-%m-%d %H:%M:%S.%f][%t][%L][%s:%#] %v"
+}

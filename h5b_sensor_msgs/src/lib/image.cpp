@@ -10,6 +10,17 @@
 
 namespace enc = sensor_msgs::image_encodings;
 
+struct H5DTypeEncodingVisitor
+{
+  std::string operator() (std::uint8_t) const { return "8U"; }
+  std::string operator() (std::int8_t) const { return "8S"; }
+  std::string operator() (std::uint16_t) const { return "16U"; }
+  std::string operator() (std::int16_t) const { return "16S"; }
+  std::string operator() (std::int32_t) const { return "32S"; }
+  std::string operator() (float) const { return "32F"; }
+  std::string operator() (double) const { return "64F"; }
+};
+
 void
 h5b::write(h5_bridge::H5File * h5, const std::string& dset,
            const sensor_msgs::msg::Image& img, int gzip)
@@ -19,11 +30,7 @@ h5b::write(h5_bridge::H5File * h5, const std::string& dset,
       throw(std::domain_error("Image cannot have zero width!"));
     }
 
-  //
-  // XXX: This big if/else chain needs to be much more elegant.
-  //
-
-  if (img.encoding.rfind("8U", 0))
+  if (img.encoding.rfind("8U", 0) == 0)
     {
       h5->write<std::uint8_t>(
         dset,
@@ -33,7 +40,7 @@ h5b::write(h5_bridge::H5File * h5, const std::string& dset,
         static_cast<int>(img.step) / static_cast<int>(img.width),
         gzip);
     }
-  else if (img.encoding.rfind("8S", 0))
+  else if (img.encoding.rfind("8S", 0) == 0)
     {
       h5->write<std::int8_t>(
         dset,
@@ -43,69 +50,68 @@ h5b::write(h5_bridge::H5File * h5, const std::string& dset,
         static_cast<int>(img.step) / static_cast<int>(img.width),
         gzip);
     }
-  else if (img.encoding.rfind("16U", 0))
+  else if (img.encoding.rfind("16U", 0) == 0)
     {
       h5->write<std::uint16_t>(
         dset,
         img.data.data(),
         static_cast<int>(img.height),
         static_cast<int>(img.width),
-        static_cast<int>(img.step) / static_cast<int>(img.width),
+        static_cast<int>(img.step) / (static_cast<int>(img.width) * 2),
         gzip);
     }
-  else if (img.encoding.rfind("16S", 0))
+  else if (img.encoding.rfind("16S", 0) == 0)
     {
       h5->write<std::int16_t>(
         dset,
         img.data.data(),
         static_cast<int>(img.height),
         static_cast<int>(img.width),
-        static_cast<int>(img.step) / static_cast<int>(img.width),
+        static_cast<int>(img.step) / (static_cast<int>(img.width) * 2),
         gzip);
     }
-  else if (img.encoding.rfind("32S", 0))
+  else if (img.encoding.rfind("32S", 0) == 0)
     {
       h5->write<std::int32_t>(
         dset,
         img.data.data(),
         static_cast<int>(img.height),
         static_cast<int>(img.width),
-        static_cast<int>(img.step) / static_cast<int>(img.width),
+        static_cast<int>(img.step) / (static_cast<int>(img.width) * 4),
         gzip);
     }
-  else if (img.encoding.rfind("32F", 0))
+  else if (img.encoding.rfind("32F", 0) == 0)
     {
       h5->write<float>(
         dset,
         img.data.data(),
         static_cast<int>(img.height),
         static_cast<int>(img.width),
-        static_cast<int>(img.step) / static_cast<int>(img.width),
+        static_cast<int>(img.step) / (static_cast<int>(img.width) * 4),
         gzip);
     }
-  else if (img.encoding.rfind("64F", 0))
+  else if (img.encoding.rfind("64F", 0) == 0)
     {
       h5->write<double>(
         dset,
         img.data.data(),
         static_cast<int>(img.height),
         static_cast<int>(img.width),
-        static_cast<int>(img.step) / static_cast<int>(img.width),
+        static_cast<int>(img.step) / (static_cast<int>(img.width) * 8),
         gzip);
     }
   else
     {
+      H5B_ERROR("Could not write {} with encoding '{}'",
+                dset, img.encoding);
       throw(std::domain_error("Unsupported encoding: " + img.encoding));
     }
 
   h5->set_attr(dset, "header.frame_id", img.header.frame_id);
   h5->set_attr(dset, "header.stamp.sec", img.header.stamp.sec);
   h5->set_attr(dset, "header.stamp.nanosec", img.header.stamp.nanosec);
-  h5->set_attr(dset, "height", img.height);
-  h5->set_attr(dset, "width" , img.width);
   h5->set_attr(dset, "encoding", std::string(img.encoding));
   h5->set_attr(dset, "is_bigendian", img.is_bigendian);
-  h5->set_attr(dset, "step", img.step);
 }
 
 sensor_msgs::msg::Image
@@ -121,68 +127,42 @@ h5b::toImageMsg(h5_bridge::H5File * h5, const std::string& dset)
   im.data.resize(rows * im.step);
   h5->read(dset, reinterpret_cast<std::uint8_t *>(im.data.data()));
 
-  im.encoding =
-    std::visit([chans] (const auto& val) -> std::string
-               {
-                 std::string prefix;
-                 if (std::is_same_v<decltype(val), std::uint8_t>)
-                   {
-                     prefix = "8UC";
-                   }
-                 else if (std::is_same_v<decltype(val), std::int8_t>)
-                   {
-                     prefix = "8SC";
-                   }
-                 else if (std::is_same_v<decltype(val), std::uint16_t>)
-                   {
-                     prefix = "16UC";
-                   }
-                 else if (std::is_same_v<decltype(val), std::int16_t>)
-                   {
-                     prefix = "16SC";
-                   }
-                 else if (std::is_same_v<decltype(val), std::int32_t>)
-                   {
-                     prefix = "32SC";
-                   }
-                 else if (std::is_same_v<decltype(val), float>)
-                   {
-                     prefix = "32FC";
-                   }
-                 else if (std::is_same_v<decltype(val), double>)
-                   {
-                     prefix = "64FC";
-                   }
-                 else
-                   {
-                     return "unknown";
-                   }
+  im.encoding = std::visit(H5DTypeEncodingVisitor(), tp);
+  switch (chans)
+    {
+    case 1:
+      im.encoding += "C1";
+      break;
 
-                 switch (chans)
-                   {
-                   case 1:
-                     return prefix + "1";
-                   case 2:
-                     return prefix + "2";
-                   case 3:
-                     return prefix + "3";
-                   case 4:
-                     return prefix + "4";
-                   default:
-                     break;
-                   }
+    case 2:
+      im.encoding += "C2";
+      break;
 
-                 return "unknown";
-               }, tp);
+    case 3:
+      im.encoding += "C3";
+      break;
+
+    case 4:
+      im.encoding += "C4";
+      break;
+
+    default:
+      im.encoding = "unknown";
+      break;
+    }
+
   if (im.encoding == "unknown")
     {
       try
         {
-          im.encoding = h5->attr<std::string>(dset, "encoding");
+          auto d = h5->dset(dset);
+          im.encoding = h5->attr<std::string>(d, "encoding");
         }
       catch (const h5_bridge::error_t& ex)
         {
-          // noop
+          H5B_WARN("Could not pull encoding as attribute on data set: {}",
+                   dset);
+          H5B_WARN("{}", ex.what());
         }
     }
 

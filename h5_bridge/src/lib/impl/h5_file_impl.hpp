@@ -639,7 +639,7 @@ h5_bridge::H5File::Impl::write(
                      static_cast<hsize_t>(cols),
                      static_cast<hsize_t>(chans)};
 
-  int rank = chans >= 3 ? 3 : 2;
+  int rank = (chans == 1 ? 2 : 3);
   H5::DataSpace dspace(rank, dims, maxdims);
   H5::DataType dtype = std::visit(H5DTypeVisitor(), dset_t);
 

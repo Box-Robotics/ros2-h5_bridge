@@ -21,15 +21,16 @@
 #include <type_traits>
 #include <sensor_msgs/msg/image.hpp>
 #include <h5b_sensor_msgs/image.hpp>
+#include <h5b_sensor_msgs/pcl.hpp>
 
 namespace h5b_sensor_msgs
 {
   template<typename T>
-  T read(h5_bridge::H5File * h5, const std::string& dset)
+  T read(h5_bridge::H5File * h5, const std::string& path)
   {
     if constexpr(std::is_same_v<sensor_msgs::msg::Image, T>)
       {
-        return h5b_sensor_msgs::toImageMsg(h5, dset);
+        return h5b_sensor_msgs::toImageMsg(h5, path);
       }
     else
       {

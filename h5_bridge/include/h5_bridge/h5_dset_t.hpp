@@ -26,6 +26,7 @@ namespace h5_bridge
                               std::int8_t,
                               std::uint16_t,
                               std::int16_t,
+                              std::uint32_t,
                               std::int32_t,
                               float,
                               double>;

@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2020 Box Robotics, Inc
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 #include <h5b_sensor_msgs/image.hpp>
 #include <stdexcept>
 #include <string>
@@ -16,6 +31,7 @@ struct H5DTypeEncodingVisitor
   std::string operator() (std::int8_t) const { return "8S"; }
   std::string operator() (std::uint16_t) const { return "16U"; }
   std::string operator() (std::int16_t) const { return "16S"; }
+  std::string operator() (std::uint32_t) const { return "32U"; }
   std::string operator() (std::int32_t) const { return "32S"; }
   std::string operator() (float) const { return "32F"; }
   std::string operator() (double) const { return "64F"; }
@@ -58,6 +74,10 @@ h5b_sensor_msgs::write(h5_bridge::H5File * h5, const std::string& dset,
   else if (img.encoding.rfind("16S", 0) == 0)
     {
       write_wrapper<std::int16_t>(h5, dset, img, gzip);
+    }
+  else if (img.encoding.rfind("32U", 0) == 0)
+    {
+      write_wrapper<std::uint32_t>(h5, dset, img, gzip);
     }
   else if (img.encoding.rfind("32S", 0) == 0)
     {

@@ -47,6 +47,6 @@ namespace h5b_sensor_msgs
   sensor_msgs::msg::Image
   toImageMsg(h5_bridge::H5File * h5, const std::string& dset);
 
-} // end: namespace h5b
+} // end: namespace h5b_sensor_msgs
 
 #endif // H5B_SENSOR_MSGS__IMAGE_H_

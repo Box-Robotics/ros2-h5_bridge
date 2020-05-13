@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 auto h5_infile_ = []()->std::string
 {
   auto tmp_dir = fs::temp_directory_path();
-  return tmp_dir.native() + std::string("/h5b_sensor_msgs_test.h5");
+  return tmp_dir.native() + std::string("/h5b_sensor_msgs_image_test.h5");
 };
 
 const std::string H5_INFILE = h5_infile_();
@@ -104,6 +104,15 @@ TEST(image, ReadWrite)
      rows, cols, 3, "16SC3");
   rw(std::int16_t{0}, path + "/16SC4/0", path + "/16SC4/1",
      rows, cols, 4, "16SC4");
+
+  rw(std::uint32_t{0}, path + "/32UC1/0", path + "/32UC1/1",
+     rows, cols, 1, "32UC1");
+  rw(std::uint32_t{0}, path + "/32UC2/0", path + "/32UC2/1",
+     rows, cols, 2, "32UC2");
+  rw(std::uint32_t{0}, path + "/32UC3/0", path + "/32UC3/1",
+     rows, cols, 3, "32UC3");
+  rw(std::uint32_t{0}, path + "/32UC4/0", path + "/32UC4/1",
+     rows, cols, 4, "32UC4");
 
   rw(std::int32_t{0}, path + "/32SC1/0", path + "/32SC1/1",
      rows, cols, 1, "32SC1");

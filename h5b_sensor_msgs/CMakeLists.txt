@@ -19,6 +19,7 @@ find_package(sensor_msgs REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   ${CMAKE_CURRENT_SOURCE_DIR}/src/lib/image.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/lib/pcl.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/lib/logging.cpp
   )
 
@@ -62,16 +63,26 @@ install(
 #############
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  find_package(pcl_conversions REQUIRED)
+  find_package(PCL REQUIRED COMPONENTS common)
+
 
   file(GLOB TEST_SOURCES test/*.cpp)
   ament_add_gtest(${PROJECT_NAME}_test ${TEST_SOURCES})
   target_include_directories(${PROJECT_NAME}_test
     PRIVATE
       ${CMAKE_CURRENT_SOURCE_DIR}/include
+      ${PCL_INCLUDE_DIRS}
     )
   target_link_libraries(${PROJECT_NAME}_test
     ${PROJECT_NAME}
+    ${PCL_LIBRARIES}
     )
+  ament_target_dependencies(${PROJECT_NAME}_test
+    h5_bridge
+    pcl_conversions
+    )
+
 endif(BUILD_TESTING)
 
 ##############

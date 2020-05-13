@@ -225,7 +225,7 @@ TEST(h5, DSetRW)
     };
 
   std::vector<std::string> dset_names =
-    {"u8", "u16", "s8", "s16", "s32", "f32", "f64"};
+    {"u8", "u16", "u32", "s8", "s16", "s32", "f32", "f64"};
   std::sort(dset_names.begin(), dset_names.end());
 
   //
@@ -237,6 +237,7 @@ TEST(h5, DSetRW)
 
   rw(std::uint8_t{0}, "/vector/u8", rows, cols, chans);
   rw(std::uint16_t{0}, "/vector/u16", rows, cols, chans);
+  rw(std::uint32_t{0}, "/vector/u32", rows, cols, chans);
   rw(std::int8_t{0}, "/vector/s8", rows, cols, chans);
   rw(std::int16_t{0}, "/vector/s16", rows, cols, chans);
   rw(std::int32_t{0}, "/vector/s32", rows, cols, chans);
@@ -256,6 +257,7 @@ TEST(h5, DSetRW)
 
   rw(std::uint8_t{0}, "/image/mono/u8", rows, cols, chans);
   rw(std::uint16_t{0}, "/image/mono/u16", rows, cols, chans);
+  rw(std::uint32_t{0}, "/image/mono/u32", rows, cols, chans);
   rw(std::int8_t{0}, "/image/mono/s8", rows, cols, chans);
   rw(std::int16_t{0}, "/image/mono/s16", rows, cols, chans);
   rw(std::int32_t{0}, "/image/mono/s32", rows, cols, chans);
@@ -275,6 +277,7 @@ TEST(h5, DSetRW)
 
   rw(std::uint8_t{0}, "/image/rgb/u8", rows, cols, chans);
   rw(std::uint16_t{0}, "/image/rgb/u16", rows, cols, chans);
+  rw(std::uint32_t{0}, "/image/rgb/u32", rows, cols, chans);
   rw(std::int8_t{0}, "/image/rgb/s8", rows, cols, chans);
   rw(std::int16_t{0}, "/image/rgb/s16", rows, cols, chans);
   rw(std::int32_t{0}, "/image/rgb/s32", rows, cols, chans);
@@ -294,6 +297,7 @@ TEST(h5, DSetRW)
 
   rw(std::uint8_t{0}, "/lidar/16/u8", rows, cols, chans);
   rw(std::uint16_t{0}, "/lidar/16/u16", rows, cols, chans);
+  rw(std::uint32_t{0}, "/lidar/16/u32", rows, cols, chans);
   rw(std::int8_t{0}, "/lidar/16/s8", rows, cols, chans);
   rw(std::int16_t{0}, "/lidar/16/s16", rows, cols, chans);
   rw(std::int32_t{0}, "/lidar/16/s32", rows, cols, chans);

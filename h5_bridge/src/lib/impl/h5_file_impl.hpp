@@ -730,6 +730,10 @@ h5_bridge::H5File::Impl::read(const std::string& path, std::uint8_t * buff)
     {
       tp = std::int16_t{0};
     }
+  else if (dt == H5::PredType::NATIVE_UINT32)
+    {
+      tp = std::uint32_t{0};
+    }
   else if (dt == H5::PredType::NATIVE_INT32)
     {
       tp = std::int32_t{0};

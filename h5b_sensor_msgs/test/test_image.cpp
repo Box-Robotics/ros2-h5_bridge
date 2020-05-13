@@ -6,7 +6,7 @@
 #include <vector>
 #include <sensor_msgs/msg/image.hpp>
 #include <h5_bridge.hpp>
-#include <h5b_sensor_msgs/image.hpp>
+#include <h5b_sensor_msgs.hpp>
 #include <gtest/gtest.h>
 
 namespace fs = std::filesystem;
@@ -46,7 +46,7 @@ TEST(image, ReadWrite)
       //
       // read the data data out as a sensor_msgs::msg::Image
       //
-      auto im = h5b::read<sensor_msgs::msg::Image>(h5.get(), path1);
+      auto im = h5b_sensor_msgs::read<sensor_msgs::msg::Image>(h5.get(), path1);
       EXPECT_TRUE(im.height == rows);
       EXPECT_TRUE(im.width == cols);
       EXPECT_TRUE(im.encoding == enc);
@@ -55,12 +55,13 @@ TEST(image, ReadWrite)
       //
       // write the data back as a sensor_msgs::msg::Image
       //
-      EXPECT_NO_THROW(h5b::write(h5.get(), path2, im));
+      EXPECT_NO_THROW(h5b_sensor_msgs::write(h5.get(), path2, im));
 
       //
       // read the data we just wrote back again and compare
       //
-      auto im2 = h5b::read<sensor_msgs::msg::Image>(h5.get(), path2);
+      auto im2 =
+        h5b_sensor_msgs::read<sensor_msgs::msg::Image>(h5.get(), path2);
       EXPECT_TRUE(im == im2);
     };
 

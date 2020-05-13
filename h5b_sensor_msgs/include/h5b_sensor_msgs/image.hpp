@@ -21,7 +21,7 @@
 #include <h5_bridge.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
-namespace h5b
+namespace h5b_sensor_msgs
 {
   /**
    * Writes a `sensor_msgs::msg::Image` to an HDF5 dataset `dset` in the file
@@ -35,14 +35,17 @@ namespace h5b
   void write(h5_bridge::H5File * h5, const std::string& dset,
              const sensor_msgs::msg::Image& img, int gzip = 0);
 
+  /**
+   * Reads the dataset `dset` from the HDF5 file pointed to by `h5` and returns
+   * a `sensor_msgs::msg::Image` representation of those data.
+   *
+   * @param[in] h5 Pointer to an open `H5File`.
+   * @param[in] dset The fullpath name of the dataset to write to
+   *
+   * @return A `sensor_msgs::msg::Image` representation of the H5 dataset.
+   */
   sensor_msgs::msg::Image
   toImageMsg(h5_bridge::H5File * h5, const std::string& dset);
-
-  template<typename T>
-  T read(h5_bridge::H5File * h5, const std::string& dset)
-  {
-    return h5b::toImageMsg(h5, dset);
-  }
 
 } // end: namespace h5b
 

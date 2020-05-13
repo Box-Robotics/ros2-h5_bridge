@@ -22,8 +22,8 @@ struct H5DTypeEncodingVisitor
 };
 
 void
-h5b::write(h5_bridge::H5File * h5, const std::string& dset,
-           const sensor_msgs::msg::Image& img, int gzip)
+h5b_sensor_msgs::write(h5_bridge::H5File * h5, const std::string& dset,
+                       const sensor_msgs::msg::Image& img, int gzip)
 {
   if (img.width < 1)
     {
@@ -115,7 +115,7 @@ h5b::write(h5_bridge::H5File * h5, const std::string& dset,
 }
 
 sensor_msgs::msg::Image
-h5b::toImageMsg(h5_bridge::H5File * h5, const std::string& dset)
+h5b_sensor_msgs::toImageMsg(h5_bridge::H5File * h5, const std::string& dset)
 {
   sensor_msgs::msg::Image im;
   auto [tp, rows, cols, chans] = h5->get_shape(dset);

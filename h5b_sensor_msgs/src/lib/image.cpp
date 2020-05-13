@@ -21,6 +21,19 @@ struct H5DTypeEncodingVisitor
   std::string operator() (double) const { return "64F"; }
 };
 
+template<typename T>
+void
+write_wrapper(h5_bridge::H5File * h5, const std::string& dset,
+              const sensor_msgs::msg::Image& img, int gzip)
+{
+  h5->write<T>(
+    dset, img.data.data(),
+    static_cast<int>(img.height),
+    static_cast<int>(img.width),
+    static_cast<int>(img.step) / (static_cast<int>(img.width) * sizeof(T)),
+    gzip);
+}
+
 void
 h5b_sensor_msgs::write(h5_bridge::H5File * h5, const std::string& dset,
                        const sensor_msgs::msg::Image& img, int gzip)
@@ -32,73 +45,31 @@ h5b_sensor_msgs::write(h5_bridge::H5File * h5, const std::string& dset,
 
   if (img.encoding.rfind("8U", 0) == 0)
     {
-      h5->write<std::uint8_t>(
-        dset,
-        img.data.data(),
-        static_cast<int>(img.height),
-        static_cast<int>(img.width),
-        static_cast<int>(img.step) / static_cast<int>(img.width),
-        gzip);
+      write_wrapper<std::uint8_t>(h5, dset, img, gzip);
     }
   else if (img.encoding.rfind("8S", 0) == 0)
     {
-      h5->write<std::int8_t>(
-        dset,
-        img.data.data(),
-        static_cast<int>(img.height),
-        static_cast<int>(img.width),
-        static_cast<int>(img.step) / static_cast<int>(img.width),
-        gzip);
+      write_wrapper<std::int8_t>(h5, dset, img, gzip);
     }
   else if (img.encoding.rfind("16U", 0) == 0)
     {
-      h5->write<std::uint16_t>(
-        dset,
-        img.data.data(),
-        static_cast<int>(img.height),
-        static_cast<int>(img.width),
-        static_cast<int>(img.step) / (static_cast<int>(img.width) * 2),
-        gzip);
+      write_wrapper<std::uint16_t>(h5, dset, img, gzip);
     }
   else if (img.encoding.rfind("16S", 0) == 0)
     {
-      h5->write<std::int16_t>(
-        dset,
-        img.data.data(),
-        static_cast<int>(img.height),
-        static_cast<int>(img.width),
-        static_cast<int>(img.step) / (static_cast<int>(img.width) * 2),
-        gzip);
+      write_wrapper<std::int16_t>(h5, dset, img, gzip);
     }
   else if (img.encoding.rfind("32S", 0) == 0)
     {
-      h5->write<std::int32_t>(
-        dset,
-        img.data.data(),
-        static_cast<int>(img.height),
-        static_cast<int>(img.width),
-        static_cast<int>(img.step) / (static_cast<int>(img.width) * 4),
-        gzip);
+      write_wrapper<std::int32_t>(h5, dset, img, gzip);
     }
   else if (img.encoding.rfind("32F", 0) == 0)
     {
-      h5->write<float>(
-        dset,
-        img.data.data(),
-        static_cast<int>(img.height),
-        static_cast<int>(img.width),
-        static_cast<int>(img.step) / (static_cast<int>(img.width) * 4),
-        gzip);
+      write_wrapper<float>(h5, dset, img, gzip);
     }
   else if (img.encoding.rfind("64F", 0) == 0)
     {
-      h5->write<double>(
-        dset,
-        img.data.data(),
-        static_cast<int>(img.height),
-        static_cast<int>(img.width),
-        static_cast<int>(img.step) / (static_cast<int>(img.width) * 8),
-        gzip);
+      write_wrapper<double>(h5, dset, img, gzip);
     }
   else
     {

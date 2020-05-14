@@ -113,7 +113,7 @@ h5b_sensor_msgs::toImageMsg(h5_bridge::H5File * h5, const std::string& dset)
   im.height = rows;
   im.width = cols;
   auto pixel_size = std::visit([] (const auto& val) -> std::size_t
-                               { return sizeof(decltype(val)); }, tp);
+                               { return sizeof(decltype(val){0}); }, tp);
   im.step = cols * chans * pixel_size;
   im.data.resize(rows * im.step);
   h5->read(dset, reinterpret_cast<std::uint8_t *>(im.data.data()));

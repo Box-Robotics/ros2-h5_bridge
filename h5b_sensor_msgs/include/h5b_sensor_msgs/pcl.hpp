@@ -28,8 +28,8 @@ namespace h5b_sensor_msgs
    * file managed by `h5`.
    *
    * The point cloud is serialized to a group with datasets underneath that map
-   * one group for each of its fields. The exception is, if the point cloud has
-   * fields `x`, `y`, and `z`, those data are bundled together into one
+   * one dataset for each of its fields. The exception is, if the point cloud
+   * has fields `x`, `y`, and `z`, those data are bundled together into one
    * 3-channel array. We consider this a form of the "struct of arrays"
    * approach to serialization versus the "array of structs" approach (that a
    * typical point cloud employs).

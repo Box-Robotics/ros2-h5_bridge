@@ -40,7 +40,7 @@ namespace h5b_sensor_msgs
    * a `sensor_msgs::msg::Image` representation of those data.
    *
    * @param[in] h5 Pointer to an open `H5File`.
-   * @param[in] dset The fullpath name of the dataset to write to
+   * @param[in] dset The fullpath name of the dataset to read from
    *
    * @return A `sensor_msgs::msg::Image` representation of the H5 dataset.
    */

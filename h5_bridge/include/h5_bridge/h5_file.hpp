@@ -220,6 +220,16 @@ namespace h5_bridge
     }
 
     /**
+     * Accessor for the value of an attribute on a cached object.
+     *
+     * @param[in] obj The cached object whose attribute we want to access
+     * @param[in] key The attribute name
+     * @param[out] value_out The attribute value read from H5
+     */
+    void attr(const h5_bridge::H5ObjId& obj, const std::string& key,
+              h5_bridge::Attr_t& value_out);
+
+    /**
      * Writes a byte buffer to a data set pointed to by `obj`. `buff` is
      * assumed to hold a byte buffer encoding rows*cols*chans values of `T`.
      * The data are expected to be organized as described in the `write`
@@ -269,6 +279,24 @@ namespace h5_bridge
     }
 
     /**
+     * Writes a byte buffer to H5 as a data set. You should use one of the
+     * higher-level `write` functions if you can. They ultimately call this
+     * one to do the heavy lifting.
+     *
+     * @param[in] obj The object pointer to the data set we wish to write
+     * @param[in] buff They byte array of data
+     * @param[in] dset_t The data type "tag" indicating the type of data
+     *                   contained in the byte buffer.
+     * @param[in] rows The number of rows in the data (in dset_t space)
+     * @param[in] cols The number of columns in the data (in dset_t space)
+     * @param[in] chans The number of channels in the data (in dset_t space)
+     * @param[in] gzip The compression level.
+     */
+    void write(const h5_bridge::H5ObjId& obj, const std::uint8_t * buff,
+               const h5_bridge::DSet_t dset_t, int rows, int cols,
+               int chans, int gzip);
+
+    /**
      * Reads the data set pointed to by `obj` and returns its shape
      *
      * @param[in] obj An object "pointer" to the data set we wish to read
@@ -304,7 +332,7 @@ namespace h5_bridge
       auto [tp, rows, cols, chans] = this->get_shape(obj);
       try
         {
-          auto var = std::get<T>(tp);
+          (void) std::get<T>(tp);
         }
       catch (const std::bad_variant_access& ex)
         {
@@ -316,6 +344,16 @@ namespace h5_bridge
 
       return std::make_tuple(retval, rows, cols, chans);
     }
+
+    /**
+     * Low-level read function for reading a dataset into a byte-buffer. It
+     * highly suggested to use the higher-level `read` interface that does type
+     * checking and returns a `std::vector<T>` along with the data shape.
+     *
+     * @param[in] obj The pointer to the dataset to read
+     * @param[out] buff The byte buffer to fill with data.
+     */
+    void read(const h5_bridge::H5ObjId& obj, std::uint8_t * buff);
 
     /**
      * Clears the object cache. If the passed in `obj` points to a valid
@@ -331,19 +369,6 @@ namespace h5_bridge
      * Flush buffers to disk
      */
     void flush();
-
-    //
-    // XXX: Document these functions
-    //
-
-    void attr(const h5_bridge::H5ObjId& obj, const std::string& key,
-              h5_bridge::Attr_t& value_out);
-
-    void write(const h5_bridge::H5ObjId& obj, const std::uint8_t * buff,
-               const h5_bridge::DSet_t dset_t, int rows, int cols,
-               int chans, int gzip);
-
-    void read(const h5_bridge::H5ObjId& obj, std::uint8_t * buff);
 
   private:
     class Impl;

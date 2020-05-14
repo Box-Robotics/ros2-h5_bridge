@@ -32,6 +32,8 @@ const int h5_bridge::ERR_H5_WRITE_ATTR_FAILED = 6009;
 const int h5_bridge::ERR_H5_OPEN_DSET_FAILED = 6010;
 const int h5_bridge::ERR_H5_CREATE_DSET_FAILED = 6011;
 const int h5_bridge::ERR_H5_WRITE_DSET_FAILED = 6012;
+const int h5_bridge::ERR_H5_BAD_SHAPE = 6013;
+const int h5_bridge::ERR_H5_CORRUPT_FILE = 6014;
 
 const char *h5_bridge::strerror(int errnum)
 {
@@ -78,6 +80,12 @@ const char *h5_bridge::strerror(int errnum)
 
     case h5_bridge::ERR_H5_WRITE_DSET_FAILED:
       return "Failed to write DataSet";
+
+    case h5_bridge::ERR_H5_BAD_SHAPE:
+      return "The data has an invalid shape";
+
+    case h5_bridge::ERR_H5_CORRUPT_FILE:
+      return "The logical structure of the data appears to be corrupt";
 
     default:
       return ::strerror(errnum);

@@ -90,7 +90,23 @@ TEST(pcl, PointXYZ)
 
       EXPECT_NO_THROW(
         h5b_sensor_msgs::write(
-          h5.get(), "/pcl/xyz/" + std::to_string(rows), msg));
+          h5.get(), "/pcl/xyz/0/" + std::to_string(rows), msg));
+
+      sensor_msgs::msg::PointCloud2 msg2;
+      EXPECT_NO_THROW(
+        msg2 = h5b_sensor_msgs::read<sensor_msgs::msg::PointCloud2>(
+          h5.get(), "/pcl/xyz/0/" + std::to_string(rows)));
+
+      EXPECT_NO_THROW(
+        h5b_sensor_msgs::write(
+          h5.get(), "/pcl/xyz/1/" + std::to_string(rows), msg2));
+
+      sensor_msgs::msg::PointCloud2 msg3;
+      EXPECT_NO_THROW(
+        msg3 = h5b_sensor_msgs::read<sensor_msgs::msg::PointCloud2>(
+          h5.get(), "/pcl/xyz/1/" + std::to_string(rows)));
+
+      EXPECT_TRUE(msg2 == msg3);
     }
 }
 
@@ -127,7 +143,23 @@ TEST(pcl, PointXYZI)
 
       EXPECT_NO_THROW(
         h5b_sensor_msgs::write(
-          h5.get(), "/pcl/xyzi/" + std::to_string(rows), msg));
+          h5.get(), "/pcl/xyzi/0/" + std::to_string(rows), msg));
+
+      sensor_msgs::msg::PointCloud2 msg2;
+      EXPECT_NO_THROW(
+        msg2 = h5b_sensor_msgs::read<sensor_msgs::msg::PointCloud2>(
+          h5.get(), "/pcl/xyzi/0/" + std::to_string(rows)));
+
+      EXPECT_NO_THROW(
+        h5b_sensor_msgs::write(
+          h5.get(), "/pcl/xyzi/1/" + std::to_string(rows), msg2));
+
+      sensor_msgs::msg::PointCloud2 msg3;
+      EXPECT_NO_THROW(
+        msg3 = h5b_sensor_msgs::read<sensor_msgs::msg::PointCloud2>(
+          h5.get(), "/pcl/xyzi/1/" + std::to_string(rows)));
+
+      EXPECT_TRUE(msg2 == msg3);
     }
 }
 
@@ -180,6 +212,22 @@ TEST(pcl, PointOuster)
 
       EXPECT_NO_THROW(
         h5b_sensor_msgs::write(
-          h5.get(), "/pcl/ouster/" + std::to_string(rows), msg));
+          h5.get(), "/pcl/ouster/0/" + std::to_string(rows), msg));
+
+      sensor_msgs::msg::PointCloud2 msg2;
+      EXPECT_NO_THROW(
+        msg2 = h5b_sensor_msgs::read<sensor_msgs::msg::PointCloud2>(
+          h5.get(), "/pcl/ouster/0/" + std::to_string(rows)));
+
+      EXPECT_NO_THROW(
+        h5b_sensor_msgs::write(
+          h5.get(), "/pcl/ouster/1/" + std::to_string(rows), msg2));
+
+      sensor_msgs::msg::PointCloud2 msg3;
+      EXPECT_NO_THROW(
+        msg3 = h5b_sensor_msgs::read<sensor_msgs::msg::PointCloud2>(
+          h5.get(), "/pcl/ouster/1/" + std::to_string(rows)));
+
+      EXPECT_TRUE(msg2 == msg3);
     }
 }

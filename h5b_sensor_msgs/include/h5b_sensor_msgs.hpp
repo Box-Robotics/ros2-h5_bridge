@@ -20,11 +20,21 @@
 #include <stdexcept>
 #include <type_traits>
 #include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <h5b_sensor_msgs/image.hpp>
 #include <h5b_sensor_msgs/pcl.hpp>
 
 namespace h5b_sensor_msgs
 {
+  /**
+   * Template wrapper front-end to the various deserialization functions.
+   *
+   * @param[in] h5 An open h5 file
+   * @param[in] path The path to the H5 object containing the data (this may be
+   *                  a group or a data set depending upon the particular
+   *                  deserializer).
+   * @return The sensor_msg specified by the template parameter `T`.
+   */
   template<typename T>
   T read(h5_bridge::H5File * h5, const std::string& path)
   {
@@ -32,9 +42,13 @@ namespace h5b_sensor_msgs
       {
         return h5b_sensor_msgs::toImageMsg(h5, path);
       }
+    else if (std::is_same_v<sensor_msgs::msg::PointCloud2, T>)
+      {
+        return h5b_sensor_msgs::toPointCloud2Msg(h5, path);
+      }
     else
       {
-        throw(std::domain_error("No serializer available for type"));
+        throw(std::domain_error("No deserializer available for T"));
       }
   }
 }

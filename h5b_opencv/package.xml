@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd"
+            schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>h5b_opencv</name>
+  <version>0.0.0</version>
+  <description>HDF5 interface for opencv arrays</description>
+  <author email="tom@boxrobotics.ai">tpanzarella</author>
+  <maintainer email="tom@boxrobotics.ai">Tom Panzarella</maintainer>
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament</buildtool_depend>
+
+  <depend>h5_bridge</depend>
+  <depend>libopencv-dev</depend>
+
+  <test_depend>ament_cmake_gtest</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

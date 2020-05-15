@@ -26,7 +26,7 @@ namespace h5b_opencv
   /**
    * Writes and OpenCV array to an HDF5 dataset
    *
-   * @param[in] h5 A pointer to an open hdf5 file
+   * @param[in] h5 A pointer to an open HDF5 file
    * @param[in] dset The full path to the dataset to write
    * @param[in] mat The OpenCV array to write to h5
    * @param[in] gzip The gzip compression level
@@ -35,10 +35,12 @@ namespace h5b_opencv
              const cv::Mat& mat, int gzip = 0);
 
   /**
-   * @param[in] h5 A pointer to an open hdf5 file
+   * Reads an OpenCV array from an HDF5 dataset
+   *
+   * @param[in] h5 A pointer to an open HDF5 file
    * @param[in] dset The full path to the dataset to read from
    *
-   * @return A cv::Mat encoding of the hdf5 dataset.
+   * @return A cv::Mat encoding of the HDF5 dataset.
    */
   cv::Mat read(h5_bridge::H5File * h5, const std::string& dset);
 

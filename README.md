@@ -4,6 +4,28 @@ HDF5 for humans. This library provides an intuitive C++ interface for
 HDF5 serialization and deserialization of various array data types used in
 ROS2.
 
+Releases
+========
+<table>
+  <tr>
+    <th>ros2-h5_bridge version</th>
+    <th>Linux distribution</th>
+    <th>ROS distribution</th>
+  </tr>
+  <tr>
+    <td>0.0.0</td>
+    <td>Ubuntu 18.04</td>
+    <td>Eloquent</td>
+  </tr>
+</table>
+
+**NOTE:**  This code is currently research-grade. It is currently used to
+support an internal research pipeline at Box Robotics. At some point, we will
+stablilize the interface and support the code for production workloads. At that
+point, we will bump to an official version number.
+
+About
+=====
 The design of `h5_bridge` is intentionally simple. Under the hood, the HDF5
 bits are completely hidden from the programmer to include compiling and linking
 (the core interface is implemented as a PIMPL). The primary _handle_ to the h5

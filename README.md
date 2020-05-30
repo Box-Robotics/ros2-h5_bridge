@@ -71,7 +71,7 @@ implementations can leverage. Writing a std vector to HDF5 is as simple as:
 
 ```cpp
 // open the file
-auto h5 = std::make_unique<h5_bridge::H5File>("/path/to/file.h5", "a');
+auto h5 = std::make_unique<h5_bridge::H5File>("/path/to/file.h5", "a");
 
 // create a vector of random pixel data
 auto vec = h5_bridge::random_vec<T>(rows*cols*chans);
@@ -90,7 +90,7 @@ h5b_sensor_msgs
 --------------
 ### sensor_msgs::msg::Image
 
-Reading a writing an image looks like:
+Reading and writing an image looks like:
 
 ```cpp
 //

@@ -59,7 +59,8 @@ h5b_sensor_msgs::write(h5_bridge::H5File * h5, const std::string& dset,
       throw(std::domain_error("Image cannot have zero width!"));
     }
 
-  if (img.encoding.rfind("8U", 0) == 0)
+  if ((img.encoding == "mono8") ||
+      (img.encoding.rfind("8U", 0) == 0))
     {
       write_wrapper<std::uint8_t>(h5, dset, img, gzip);
     }
@@ -67,7 +68,8 @@ h5b_sensor_msgs::write(h5_bridge::H5File * h5, const std::string& dset,
     {
       write_wrapper<std::int8_t>(h5, dset, img, gzip);
     }
-  else if (img.encoding.rfind("16U", 0) == 0)
+  else if ((img.encoding == "mono16") ||
+           (img.encoding.rfind("16U", 0) == 0))
     {
       write_wrapper<std::uint16_t>(h5, dset, img, gzip);
     }

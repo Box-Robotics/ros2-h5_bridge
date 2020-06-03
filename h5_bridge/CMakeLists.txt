@@ -11,10 +11,9 @@ find_package(HDF5 REQUIRED COMPONENTS C CXX)
 find_package(spdlog_vendor REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
-# XXX: This should not be needed, but the way
-# spdlog is integrated in ROS2 + CMake is borked.
-# I'll consider bundling spdlog with this project
-# as a git submodule, but that feels wholly unnecessary.
+# XXX: This should not be needed, but it is the only way I can get the
+# ROS2-bundled spdlog to integrate "nicely" with my CMake build. I'm probably
+# overlooking something "obvious" ??
 set(SPDLOG_DIR /opt/ros/eloquent/include)
 
 #############

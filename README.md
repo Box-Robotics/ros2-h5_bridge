@@ -13,23 +13,25 @@ Releases
     <th>ROS distribution</th>
   </tr>
   <tr>
-    <td>0.0.0</td>
+    <td>0.1.0</td>
     <td>Ubuntu 18.04</td>
     <td>Eloquent</td>
   </tr>
 </table>
 
-**NOTE:**  This code is currently research-grade. It is currently used to
-support an internal research pipeline at Box Robotics. At some point, we will
-stablilize the interface and support the code for production workloads. At that
-point, we will bump to an official version number.
-
 About
 =====
-The design of `h5_bridge` is intentionally simple. Under the hood, the HDF5
-bits are completely hidden from the programmer to include compiling and linking
-(the core interface is implemented as a PIMPL). The primary _handle_ to the h5
-file is a move-only unique_ptr type. While the library provides no explicit
+From the [HDF Group
+Website](https://support.hdfgroup.org/HDF5/whatishdf5.html), HDF5 is a unique
+technology suite that makes possible the management of extremely large and
+complex data collections. This collection of packages attempts to make
+interfacing to HDF5 seamless for usage within ROS2 software systems.
+
+The design of `h5_bridge` is intended to be simple for end-users. Under the
+hood, the HDF5 bits are completely hidden from the programmer to include
+compiling and linking (the core interface is implemented as a PIMPL). It is
+advisable to make your primary _handle_ to the h5 file a move-only unique_ptr
+type (see the code examples below). While the library provides no explicit
 thread safety, a simple lock around the `h5_file` in application code will
 ensure the library can be used from multiple threads.
 
@@ -49,7 +51,57 @@ pixel data type written to h5 explicitly. We are not just writing bytes to H5
 with some metadata annotating what the bytes mean. If you are looking for an
 I/O optimized H5 interface, this is not the library for you. If, however, you
 are looking for a tool to assist in robotics/ROS2-based data science, this
-library should treat you quite well.
+library should treat you quite well. Indeed, serializing ROS2 array types with
+this library allows for intuitive analysis of your data using standard H5
+tools. A favorite of ours is
+[HDFView](https://www.hdfgroup.org/downloads/hdfview/).
+
+
+Building, Testing, and Installing
+=================================
+The build command we use is:
+
+```
+$ colcon build \
+  --cmake-args " -DCMAKE_BUILD_TYPE=Release" \
+  --event-handlers console_cohesion+
+```
+
+To run the unit tests (recommended), we like to see the `gtest` output in
+real-time on the screen. To that end, we don't use the `colcon` approach for
+this step. Instead, we use the following `test.sh` script, run from the
+top-level of our workspace.
+
+```
+#!/bin/bash
+
+echo -e "\nh5_bridge:\n"
+H5_BRIDGE_LOG_FILE=/tmp/h5_bridge.log ./build/h5_bridge/h5_bridge_test
+echo -e "\nh5b_sensor_msgs:\n"
+H5_BRIDGE_LOG_FILE=/tmp/h5_bridge.log ./build/h5b_sensor_msgs/h5b_sensor_msgs_test
+echo -e "\nh5b_opencv:\n"
+H5_BRIDGE_LOG_FILE=/tmp/h5_bridge.log ./build/h5b_opencv/h5b_opencv_test
+```
+
+To install the software to a location other than the `install` subdirectory of
+your workspace, you can run the `colcon build ...` command again with the
+`--install-base` argument. For example:
+
+```
+#!/bin/bash
+
+rm -rf build log install
+
+colcon build \
+  --install-base "${BOX_ROS2}/h5_bridge" \
+  --cmake-args " -DCMAKE_BUILD_TYPE=Release" \
+  --event-handlers console_cohesion+
+```
+
+In the example above, we have an environment variable called `${BOX_ROS2}` set
+that points to a top-level directory of where we install custom ROS2
+packages. Adapt the above as you see fit for your system.
+
 
 Supported Types
 ===============
@@ -63,6 +115,10 @@ data types they support for marshaling data to/from HDF5.
 
 h5_bridge
 ---------
+**NOTE:** More comprehensive example code can be found in the [unit
+tests](h5_bridge/test/test_h5.cpp).
+
+
 ### std::vector<T>
 
 The core `h5_bridge` package provides a simple way to write arrays of
@@ -89,6 +145,9 @@ auto [vec, rows, cols, chans] = h5->read<T>("/path/to/dataset");
 h5b_sensor_msgs
 --------------
 ### sensor_msgs::msg::Image
+**NOTE:** More comprehensive example code can be found in the [unit
+tests](h5b_sensor_msgs/test/test_image.cpp).
+
 
 Reading and writing an image looks like:
 
@@ -109,6 +168,9 @@ to the dataset as a set of attributes. The data are written as an organized
 matrix of pixels according to its shape as specified in the message metadata.
 
 ### sensor_msgs::msg::PointCloud2
+**NOTE:** More comprehensive example code can be found in the [unit
+tests](h5b_sensor_msgs/test/test_pcl.cpp).
+
 
 When developing the serialization of the `PointCloud2` type we took an
 opinionated approach. As they are encoded in the ROS2 message type,
@@ -140,6 +202,9 @@ h5b_sensor_msgs::write(h5.get(), "/path/to/pcl_group", msg);
 h5b_opencv
 ----------
 ### cv::Mat
+**NOTE:** More comprehensive example code can be found in the [unit
+tests](h5b_opencv/test/test_opencv.cpp).
+
 
 OpenCV messages are serialized in a similar way as the
 `sensor_msgs::msg::Image` is handled. That is, an organized array of pixel

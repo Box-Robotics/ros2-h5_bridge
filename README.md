@@ -17,6 +17,11 @@ Releases
     <td>Ubuntu 18.04</td>
     <td>Eloquent</td>
   </tr>
+  <tr>
+    <td>0.1.0</td>
+    <td>Ubuntu 20.04</td>
+    <td>Foxy</td>
+  </tr>
 </table>
 
 About
